@@ -2,7 +2,7 @@ import "utils.ksp"
 import "gui.ksp"
 
 on init
-    set_script_title("FlexRouter 1.0")
+    set_script_title("FlexRouter 1.0.0")
 	declare const DEBUG := 1
 	{ Max number of rules allowed per data structure. }
 	declare const MAX_RULES := 32
@@ -436,6 +436,7 @@ on midi_in
 			ignore_midi
 			route_midi_event(active_routes_bitmap, offset, MIDI_COMMAND, MIDI_BYTE_1, MIDI_BYTE_2)
 		end if
+		message("")
 		debug("MIDI: cmd=" & MIDI_COMMAND & ", b1=" & MIDI_BYTE_1 & ", b2=" & MIDI_BYTE_2)
 	end if
 end on
