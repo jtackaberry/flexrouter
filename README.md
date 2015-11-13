@@ -34,7 +34,7 @@ Here are a few use-cases that can be solved using FlexRouter:
 
 Follow these steps:
 
-1. Download the [latest compiled script](https://github.com/jtackaberry/flexrouter/releases/latest)
+1. Download the [latest compiled script](https://urandom.ca/flexrouter/latest)
 2. Copy the contents to clipboard
 3. In your Kontakt instance, click the script button in the toolbar to open the multiscript pane
 4. Select the desired slot for the script, and click the edit button
