@@ -1,0 +1,171 @@
+{ Called during script initialization }
+macro utils_initialize
+	declare !notes[12]
+	declare !note_names[128]
+	declare !channel_names[64]
+
+	notes[0] := "C"
+	notes[1] := "C#"
+	notes[2] := "D"
+	notes[3] := "D#"
+	notes[4] := "E"
+	notes[5] := "F"
+	notes[6] := "F#"
+	notes[7] := "G"
+	notes[8] := "G#"
+	notes[9] := "A"
+	notes[10] := "A#"
+	notes[11] := "B"
+
+	for i := 0 to 127
+		note_names[i] := notes[i mod 12] & (i / 12 - 2)
+	end for
+
+	for i := 0 to 63
+		if i < 16
+			channel_names[i] := "[A] " & (i mod 16) + 1
+		else if i < 32
+			channel_names[i] := "[B] " & (i mod 16) + 1
+		else if i < 48
+			channel_names[i] := "[C] " & (i mod 16) + 1
+		else
+			channel_names[i] := "[D] " & (i mod 16) + 1
+		end if
+	end for
+end macro
+
+function debug(msg)
+	if DEBUG = 1
+		message("FlexRouter:" & msg)
+	end if
+end function
+
+
+function get_keyswitch_name(ks) -> name
+	if ks < 0
+		name := "Undefined"
+	else if ks < 128
+		name := !note_names[ks]
+	else
+		name := "CC" & (ks / 128 - 128) & "/" & (ks mod 128)
+	end if
+end function
+
+
+function get_midi_channel_name(channel) -> name
+	name := !channel_names[channel - 1]
+end function
+
+
+{ Oh KSP, how do I love thee. Let me count the ways. 
+
+  KSP can't persist string arrays, and so the mind blowing absurdity you see
+  below is actually necessary. }
+macro declare_strings_16(#prefix#)
+	declare @#prefix#00
+	declare @#prefix#01
+	declare @#prefix#02
+	declare @#prefix#03
+	declare @#prefix#04
+	declare @#prefix#05
+	declare @#prefix#06
+	declare @#prefix#07
+	declare @#prefix#08
+	declare @#prefix#09
+	declare @#prefix#10
+	declare @#prefix#11
+	declare @#prefix#12
+	declare @#prefix#13
+	declare @#prefix#14
+	declare @#prefix#15
+
+	make_persistent(@#prefix#00)
+	make_persistent(@#prefix#01)
+	make_persistent(@#prefix#02)
+	make_persistent(@#prefix#03)
+	make_persistent(@#prefix#04)
+	make_persistent(@#prefix#05)
+	make_persistent(@#prefix#06)
+	make_persistent(@#prefix#07)
+	make_persistent(@#prefix#08)
+	make_persistent(@#prefix#09)
+	make_persistent(@#prefix#10)
+	make_persistent(@#prefix#11)
+	make_persistent(@#prefix#12)
+	make_persistent(@#prefix#13)
+	make_persistent(@#prefix#14)
+	make_persistent(@#prefix#15)
+end macro
+
+macro read_strings_16_to_array(#prefix#, #target#)
+	read_persistent_var(#prefix#00)
+	read_persistent_var(#prefix#01)
+	read_persistent_var(#prefix#02)
+	read_persistent_var(#prefix#03)
+	read_persistent_var(#prefix#04)
+	read_persistent_var(#prefix#05)
+	read_persistent_var(#prefix#06)
+	read_persistent_var(#prefix#07)
+	read_persistent_var(#prefix#08)
+	read_persistent_var(#prefix#09)
+	read_persistent_var(#prefix#10)
+	read_persistent_var(#prefix#11)
+	read_persistent_var(#prefix#12)
+	read_persistent_var(#prefix#13)
+	read_persistent_var(#prefix#14)
+	read_persistent_var(#prefix#15)
+
+	#target#[0] := #prefix#00
+	#target#[1] := #prefix#01
+	#target#[2] := #prefix#02
+	#target#[3] := #prefix#03
+	#target#[4] := #prefix#04
+	#target#[5] := #prefix#05
+	#target#[6] := #prefix#06
+	#target#[7] := #prefix#07
+	#target#[8] := #prefix#08
+	#target#[9] := #prefix#09
+	#target#[10] := #prefix#10
+	#target#[11] := #prefix#11
+	#target#[12] := #prefix#12
+	#target#[13] := #prefix#13
+	#target#[14] := #prefix#14
+	#target#[15] := #prefix#15
+end macro
+
+macro set_strings_16(#prefix#, n, value)
+	select n
+		case 0
+			#prefix#00 := value
+		case 1
+			#prefix#01 := value
+		case 2
+			#prefix#02 := value
+		case 3
+			#prefix#03 := value
+		case 4
+			#prefix#04 := value
+		case 5
+			#prefix#05 := value
+		case 6
+			#prefix#06 := value
+		case 7
+			#prefix#07 := value
+		case 8
+			#prefix#08 := value
+		case 9
+			#prefix#09 := value
+		case 10
+			#prefix#10 := value
+		case 11
+			#prefix#11 := value
+		case 12
+			#prefix#12 := value
+		case 13
+			#prefix#13 := value
+		case 14
+			#prefix#14 := value
+		case 15
+			#prefix#15 := value
+	end select
+end macro
