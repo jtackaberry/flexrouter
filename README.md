@@ -2,7 +2,7 @@
 
 ## What is it?
 
-FlexRouter is a highly customizable Kontakt Multiscript designed for managing and unifying keyswitches.  Some features include:
+FlexRouter is a highly customizable Kontakt 5 Multiscript designed for managing and unifying keyswitches.  Some features include:
 
 * support for note or CC-based keyswitches
 * arbitrary translation between notes and CCs
@@ -28,6 +28,7 @@ Here are a few use-cases that can be solved using FlexRouter:
   other libraries on other channels
 * Notes on channel 16 redirect to Spitfire UACC events on channel 1
 
+There's also a [walkthrough video](https://www.youtube.com/watch?v=FddWrEwaNmM) that shows how to implement some of these use-cases.
 
 
 ## How do I install it?
