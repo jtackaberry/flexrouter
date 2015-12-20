@@ -291,7 +291,6 @@ function _route_midi_event_int32(bitmap, channel_offset, command, byte1, byte2)
     for i := 0 to 31
         if bitmap .and. sh_left(1, i) # 0
             set_midi(channel_offset + i, command, byte1, byte2)
-            message("route key: " & byte1 & " to " & channel_offset + i)
         end if
     end for
 end function
