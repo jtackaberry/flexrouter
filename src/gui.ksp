@@ -6,25 +6,25 @@ macro gui_initialize
     declare ui_menu menu_rules
     declare ui_button button_add
     declare ui_button button_remove
-      declare ui_switch button_rule_bypass
+    declare ui_switch button_rule_bypass
     { TODO }
     { declare ui_button button_sort }
 
 
     { Rule name }
     declare ui_label label_rule_name (1,1)
-      declare ui_text_edit @text_rule_name
+    declare ui_text_edit @text_rule_name
 
     { Keyswitch channel }
     declare ui_label label_rule_keyswitch_channel (1,1)
-      declare ui_value_edit value_rule_keyswitch_channel (1, 16, 1)
+    declare ui_value_edit value_rule_keyswitch_channel (1, 16, 1)
     declare ui_label label_rule_keyswitch_channel_name (1,1)
 
     { Target Channel (rule default) }
     declare ui_label label_rule_target_channel (1,1)
-      declare ui_value_edit value_rule_target_channel (1, 64, 1)
+    declare ui_value_edit value_rule_target_channel (1, 64, 1)
     declare ui_label label_rule_target_name (1,1)
-      declare ui_label label_rule_target_info (1,1)
+    declare ui_label label_rule_target_info (1,1)
 
     { Keyswitches menu and keyswitch buttons }
     declare ui_label label_keyswitches (1,1)
@@ -71,13 +71,13 @@ macro gui_initialize
 
 
     { CONTROL INITIALIZATION }
-      make_persistent(menu_rules)
+    make_persistent(menu_rules)
     set_ui_height_px(200)
 
     move_and_set_width(menu_rules, 70, 10, 210)
-      for i := 0 to MAX_RULES - 1
+    for i := 0 to MAX_RULES - 1
         add_menu_item(menu_rules, rules[i].name, i)
-          set_menu_item_visibility(get_ui_id(menu_rules), i, rules[i].config[RULE_DEFINED])
+        set_menu_item_visibility(get_ui_id(menu_rules), i, rules[i].config[RULE_DEFINED])
     end for
 
     set_text(button_add, "Add Rule")
@@ -113,7 +113,7 @@ macro gui_initialize
 
     init_label(label_keyswitches, "Keyswitches", 100, 110, 90)
     move_and_set_width(menu_keyswitches, 200, 110, 80)
-       for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
+    for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
         add_menu_item(menu_keyswitches, "", i)
     end for
     set_text(button_keyswitch_midi_learn, "MIDI Learn")
@@ -171,7 +171,7 @@ macro gui_initialize
     init_info_label(label_rule_keyswitch_target_name, 0, "[A] 1", 235, 170, 25)
     init_info_label(label_rule_keyswitch_target_info, 9, "(0 = use default target channel for rule)", 275, 170, 200)
 
-      read_persistent_var(menu_rules)
+    read_persistent_var(menu_rules)
     gui_update_for_selected_rule()
 end macro
 
@@ -179,8 +179,8 @@ end macro
 { CONVENIENCE MACROS }
 
 macro move(control, x, y)
-      set_control_par(get_ui_id(control), CONTROL_PAR_POS_X, x)
-      set_control_par(get_ui_id(control), CONTROL_PAR_POS_Y, y)
+    set_control_par(get_ui_id(control), CONTROL_PAR_POS_X, x)
+    set_control_par(get_ui_id(control), CONTROL_PAR_POS_Y, y)
 end macro
 
 macro move_and_set_width(control, x, y, w)
@@ -272,7 +272,7 @@ function gui_update_for_selected_rule()
            else
                set_menu_item_str(get_ui_id(menu_keyswitches), i, "<empty>")
             if i > 0
-                  set_menu_item_visibility(get_ui_id(menu_keyswitches), i, 0)
+                set_menu_item_visibility(get_ui_id(menu_keyswitches), i, 0)
             end if
            end if
     end for
