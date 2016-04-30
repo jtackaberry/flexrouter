@@ -1,23 +1,29 @@
 # FlexRouter
 
+*Version 2 is released!  Unfortunately it is not backward compatible with version 1, so you will need to recreate your rules.  Sorry. :(*
+
+
 ## What is it?
 
 FlexRouter is a highly customizable Kontakt 5 Multiscript designed for managing and unifying keyswitches.  Some features include:
 
-* support for note or CC-based keyswitches
-* arbitrary translation between notes and CCs
+* support for note, program change, or  CC-based keyswitches
+* arbitrary translation between notes, CCs, and program changes
 * can route events to instruments on ports A-D (64 separate channels)
 * multiple note-based keyswitches can be activated simultaneously (useful for e.g. layering articulations)
+* one keyswitch note/CC/PC can trigger routing to multiple target channels
 * one instance of FlexRouter supports 16 rules
 * each rule supports up to 128 independently configured keyswitches
+* Optional anti-hanging for notes and sustain pedal when jumping between keyswitches
+* Optional CC chasing per rule
 * probably a few bugs :)
 
 Since a picture is worth a thousand words:
 
-![](https://www.urandom.ca/flexrouter/flexrouter.png)
+![](https://www.urandom.ca/flexrouter/flexrouter-2.0.0.png)
 
 
-Here are a few use-cases that can be solved using FlexRouter:
+Here are just a few random use-cases that can be solved using FlexRouter:
 
 * Put each articulation patch on different channels (up to 64) and control with keyswitches
   from a single channel
@@ -26,9 +32,11 @@ Here are a few use-cases that can be solved using FlexRouter:
 * Use UACC to control conventional note-keyswitched libraries
 * Use UACC with Spitfire libraries, but cherry-pick certain articulations from
   other libraries on other channels
-* Notes on channel 16 redirect to Spitfire UACC events on channel 1
+* Use standard notes on channel 16 to control Spitfire via UACC on channel 1
+* 
 
 There's also a [walkthrough video](https://www.youtube.com/watch?v=FddWrEwaNmM) that shows how to implement some of these use-cases.
+(Note, the video shows version 1, but all the examples still work with version 2.)
 
 
 ## How do I install it?
