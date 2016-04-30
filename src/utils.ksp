@@ -46,6 +46,8 @@ function get_keyswitch_name(ks) -> name
         name := "Undefined"
     else if ks < 128
         name := !note_names[ks]
+    else if ks < 256
+        name := "Prog " & (ks mod 128)
     else
         name := "CC" & (ks / 128 - 128) & "/" & (ks mod 128)
     end if
@@ -57,7 +59,7 @@ function get_midi_channel_name(channel) -> name
 end function
 
 
-{ Oh KSP, how do I love thee. Let me count the ways. 
+{ Oh KSP, how do I love thee. Let me count the ways.
 
   KSP can't persist string arrays, and so the mind blowing absurdity you see
   below is actually necessary. }

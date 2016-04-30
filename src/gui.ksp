@@ -1,12 +1,15 @@
 { Called during script initialization }
 macro gui_initialize
     { DECLARATIONS }
+    declare ui_label label_global_config (1,1)
+    declare ui_menu menu_global_cc_hanging
 
     { Rules menu and rules buttons }
     declare ui_menu menu_rules
     declare ui_button button_add
     declare ui_button button_remove
     declare ui_switch button_rule_bypass
+    declare ui_switch button_rule_clone
     { TODO }
     { declare ui_button button_sort }
 
@@ -17,22 +20,43 @@ macro gui_initialize
 
     { Keyswitch channel }
     declare ui_label label_rule_keyswitch_channel (1,1)
-    declare ui_value_edit value_rule_keyswitch_channel (1, 16, 1)
-    declare ui_label label_rule_keyswitch_channel_name (1,1)
+    declare ui_menu menu_rule_keyswitch_channel
+
+    { Source Channel (rule default) }
+    declare ui_label label_rule_source_channel (1,1)
+    declare ui_menu menu_rule_source_channel
 
     { Target Channel (rule default) }
     declare ui_label label_rule_target_channel (1,1)
-    declare ui_value_edit value_rule_target_channel (1, 64, 1)
-    declare ui_label label_rule_target_name (1,1)
-    declare ui_label label_rule_target_info (1,1)
+    declare ui_menu menu_rule_target_channel
+
+    { CC chasing behaviour }
+    declare ui_label label_rule_cc_chasing  (1,1)
+    declare ui_menu menu_rule_cc_chasing
+    declare ui_label label_rule_cc_chasing_info (1,1)
+
 
     { Keyswitches menu and keyswitch buttons }
     declare ui_label label_keyswitches (1,1)
     declare ui_menu menu_keyswitches
-    declare ui_switch button_keyswitch_midi_learn
+    declare ui_button button_keyswitch_new
+    declare ui_button button_keyswitch_remove
     declare ui_switch button_keyswitch_midi_find
-    declare ui_switch button_keyswitch_remove
     declare ui_button button_keyswitch_clear
+
+
+    declare ui_label label_rule_keyswitch (1,1)
+    declare ui_menu menu_rule_keyswitch_type
+    { Key note (when keyswitch type is set to key) }
+    declare ui_value_edit value_rule_keyswitch_key (0, 127, VALUE_EDIT_MODE_NOTE_NAMES)
+    { CC controls (when keyswitch type is set to CC) }
+    declare ui_value_edit value_rule_keyswitch_cc (2, 127, 1)
+    declare ui_label label_rule_keyswitch_cc_slash (1,1)
+    declare ui_value_edit value_rule_keyswitch_cc_value (0, 127, 1)
+    {Program controls (when redirect type is set to Progran Change) }
+    declare ui_value_edit value_rule_keyswitch_program (0, 127, 1)
+    declare ui_switch button_keyswitch_midi_learn
+
 
     { Keyswitch action menu (block, passthrough, redirect) }
     declare ui_label label_rule_keyswitch_action (1,1)
@@ -50,131 +74,200 @@ macro gui_initialize
 
     { CC redirect controls (when redirect type is set to CC) }
     declare ui_value_edit value_rule_keyswitch_redirect_cc (2, 127, 1)
-    declare ui_label label_rule_keyswitch_action_cc_slash (1,1)
+    declare ui_label label_rule_keyswitch_redirect_cc_slash (1,1)
     declare ui_value_edit value_rule_keyswitch_redirect_cc_value (0, 127, 1)
+
+    { Program redirect controls (when redirect type is set to Progran Change) }
+    declare ui_value_edit value_rule_keyswitch_redirect_program (0, 127, 1)
+
 
     { Keyswitch source channel }
     declare ui_label label_rule_keyswitch_source_channel (1,1)
-    declare ui_value_edit value_rule_keyswitch_source_channel (0, 16, 1)
-    declare ui_label label_rule_keyswitch_source_name (1,1)
-    declare ui_label label_rule_keyswitch_source_info (1,1)
+    declare ui_menu menu_rule_keyswitch_source_channel
 
     { Keyswitch target channel }
     declare ui_label label_rule_keyswitch_target_channel (1,1)
-    declare ui_value_edit value_rule_keyswitch_target_channel (0, 64, 1)
-    declare ui_label label_rule_keyswitch_target_name (1,1)
-    declare ui_label label_rule_keyswitch_target_info (1,1)
+    declare ui_menu menu_rule_keyswitch_target_channel
 
     { Keyswitch MIDI Learn button }
     declare ui_switch button_rule_keyswitch_redirect_midi_learn
 
-
+    declare y := 10
 
     { CONTROL INITIALIZATION }
-    make_persistent(menu_rules)
-    set_ui_height_px(200)
 
-    move_and_set_width(menu_rules, 70, 10, 210)
-    for i := 0 to MAX_RULES - 1
+
+    make_persistent(menu_rules)
+    set_ui_height_px(310)
+
+    init_label(label_global_config, "Global Config ", 70, y, 75)
+    move_and_set_width(menu_global_cc_hanging, 150, y, 150)
+    add_menu_item(menu_global_cc_hanging, "Allow CC Hanging", 0)
+    add_menu_item(menu_global_cc_hanging, "Prevent hanging for all CCs", 1)
+    add_menu_item(menu_global_cc_hanging, "Prevent hanging for CC2/64", 2)
+    y := y + 30
+
+    move_and_set_width(menu_rules, 70, y, 210)
+    for i := 0 to MAX_GUI_RULES - 1
         add_menu_item(menu_rules, rules[i].name, i)
         set_menu_item_visibility(get_ui_id(menu_rules), i, rules[i].config[RULE_DEFINED])
     end for
 
     set_text(button_add, "Add Rule")
-    move_and_set_width(button_add, 290, 10, 50)
+    move_and_set_width(button_add, 290, y, 50)
 
     set_text(button_remove, "Remove Rule")
-    move_and_set_width(button_remove, 350, 10, 70)
+    move_and_set_width(button_remove, 350, y, 70)
 
     set_text(button_rule_bypass, "Bypass Rule")
-    move_and_set_width(button_rule_bypass, 430, 10, 65)
+    move_and_set_width(button_rule_bypass, 430, y, 65)
     center(button_rule_bypass)
+
+    set_text(button_rule_clone, "Clone Rule")
+    move_and_set_width(button_rule_clone, 505, y, 65)
+    center(button_rule_clone)
 
     {
     set_text(button_sort, "Sort Rules")
-    move_and_set_width(button_sort, 430, 10, 60)
+    move_and_set_width(button_sort, 430, y, 60)
     }
 
-    init_label(label_rule_name, "Rule Name", 95, 40, 95)
-    move_and_set_width(text_rule_name, 200, 40, 190)
+    y := y + 30
+    init_label(label_rule_name, "Rule Name", 95, y, 95)
+    move_and_set_width(text_rule_name, 200, y, 190)
 
-    init_label(label_rule_keyswitch_channel, "Keyswitch Channel", 95, 60, 95)
-    move_and_set_width(value_rule_keyswitch_channel, 200, 60, 35)
-    set_text(value_rule_keyswitch_channel, "")
-    init_info_label(label_rule_keyswitch_channel_name, 0, "[A] 1", 235, 60, 25)
+    y := y + 20
+    init_label(label_rule_keyswitch_channel, "Keyswitch Channel", 95, y, 95)
+    add_menu_item(menu_rule_keyswitch_channel, "Omni", -1)
+    move_and_set_width(menu_rule_keyswitch_channel, 200, y, 60)
+    init_channel_menu(menu_rule_keyswitch_channel, 16)
 
+    y := y + 20
+    init_label(label_rule_source_channel, "Default Source", 95, y, 95)
+    move_and_set_width(menu_rule_source_channel, 200, y, 60)
+    add_menu_item(menu_rule_source_channel, "Omni", -1)
+    init_channel_menu(menu_rule_source_channel, 16)
 
-    init_label(label_rule_target_channel, "Target Channel", 95, 80, 95)
-    move_and_set_width(value_rule_target_channel, 200, 80, 35)
-    set_text(value_rule_target_channel, "")
-    init_info_label(label_rule_target_name, 0, "[A] 1", 235, 80, 25)
-    init_info_label(label_rule_target_info, 9, "(Keyswitches can override this rule default.)", 275, 80, 200)
+    y := y + 20
+    init_label(label_rule_target_channel, "Default Target", 95, y, 95)
+    move_and_set_width(menu_rule_target_channel, 200, y, 60)
+    add_menu_item(menu_rule_target_channel, "Null", -1)
+    init_channel_menu(menu_rule_target_channel, 64)
 
+    y := y + 20
+    init_label(label_rule_cc_chasing, "CC Chasing", 95, y, 95)
+    move_and_set_width(menu_rule_cc_chasing, 200, y, 125)
+    add_menu_item(menu_rule_cc_chasing, "No chasing", 0)
+    add_menu_item(menu_rule_cc_chasing, "Chase all CCs", 1)
+    add_menu_item(menu_rule_cc_chasing, "Chase common CCs", 2)
+    init_info_label(label_rule_cc_chasing_info, 9, "This is info about CC chasing.", 325, y, 150)
 
-    init_label(label_keyswitches, "Keyswitches", 100, 110, 90)
-    move_and_set_width(menu_keyswitches, 200, 110, 80)
+    y := y + 30
+    init_label(label_keyswitches, "Keyswitches", 100, y, 90)
+
+    move_and_set_width(menu_keyswitches, 200, y, 80)
     for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
         add_menu_item(menu_keyswitches, "", i)
     end for
-    set_text(button_keyswitch_midi_learn, "MIDI Learn")
-    move_and_set_width(button_keyswitch_midi_learn, 290, 110, 60)
-    set_text(button_keyswitch_midi_find, "MIDI Find")
-    move_and_set_width(button_keyswitch_midi_find, 360, 110, 60)
+
+    set_text(button_keyswitch_new, "New")
+    move_and_set_width(button_keyswitch_new, 290, y, 35)
+
+    set_text(button_keyswitch_midi_learn, "Learn New")
+    move_and_set_width(button_keyswitch_midi_learn, 330, y, 60)
+
     set_text(button_keyswitch_remove, "Remove")
-    move_and_set_width(button_keyswitch_remove, 430, 110, 50)
+    move_and_set_width(button_keyswitch_remove, 395, y, 50)
+
+    set_text(button_keyswitch_midi_find, "MIDI Find")
+    move_and_set_width(button_keyswitch_midi_find, 460, y, 55)
+
     set_text(button_keyswitch_clear, "Clear All")
-    move_and_set_width(button_keyswitch_clear, 490, 110, 55)
+    move_and_set_width(button_keyswitch_clear, 520, y, 50)
     center(button_keyswitch_clear)
 
 
-    init_label(label_rule_keyswitch_action, "Action", 140, 130, 50)
+    y := y + 20
+    init_label(label_rule_keyswitch, "Keyswitch", 135, y, 55)
 
-    move_and_set_width(menu_rule_keyswitch_action, 200, 130, 80)
+    move_and_set_width(menu_rule_keyswitch_type, 200, y, 40)
+    add_menu_item(menu_rule_keyswitch_type, "Key", 0)
+    add_menu_item(menu_rule_keyswitch_type, "CC", 1)
+    add_menu_item(menu_rule_keyswitch_type, "Prog", 2)
+
+    move_and_set_width(value_rule_keyswitch_key, 245, y, 40)
+    set_text(value_rule_keyswitch_key, "")
+
+    move_and_set_width(value_rule_keyswitch_cc, 245, y, 35)
+    set_text(value_rule_keyswitch_cc, "")
+    init_label(label_rule_keyswitch_cc_slash, "/", 285, y, 15)
+    move_and_set_width(value_rule_keyswitch_cc_value, 300, y, 35)
+    set_text(value_rule_keyswitch_cc_value, "")
+
+    move_and_set_width(value_rule_keyswitch_program, 245, y, 35)
+    set_text(value_rule_keyswitch_program, "")
+
+
+    y := y + 20
+    init_label(label_rule_keyswitch_action, "KS Action", 135, y, 55)
+
+    move_and_set_width(menu_rule_keyswitch_action, 200, y, 80)
     add_menu_item(menu_rule_keyswitch_action, "Block", -1)
     add_menu_item(menu_rule_keyswitch_action, "Passthrough", -2)
     add_menu_item(menu_rule_keyswitch_action, "Redirect", 0)
 
-    init_label(label_rule_keyswitch_redirect_to, "to", 285, 130, 25)
+    init_label(label_rule_keyswitch_redirect_to, "to", 285, y, 25)
     center(label_rule_keyswitch_redirect_to)
 
-    move_and_set_width(menu_rule_keyswitch_redirect_type, 315, 130, 40)
+    move_and_set_width(menu_rule_keyswitch_redirect_type, 315, y, 40)
     add_menu_item(menu_rule_keyswitch_redirect_type, "Key", 0)
     add_menu_item(menu_rule_keyswitch_redirect_type, "CC", 1)
+    add_menu_item(menu_rule_keyswitch_redirect_type, "Prog", 2)
 
-    move_and_set_width(value_rule_keyswitch_redirect_key, 360, 130, 40)
+    move_and_set_width(value_rule_keyswitch_redirect_key, 360, y, 40)
     set_text(value_rule_keyswitch_redirect_key, "")
-    init_label(label_rule_keyswitch_redirect_key_velocity, "Velocity", 400, 130, 45)
+    init_label(label_rule_keyswitch_redirect_key_velocity, "Velocity", 400, y, 45)
     center(label_rule_keyswitch_redirect_key_velocity)
-    move_and_set_width(value_rule_keyswitch_redirect_key_velocity, 445, 130, 35)
+    move_and_set_width(value_rule_keyswitch_redirect_key_velocity, 445, y, 35)
     set_text(value_rule_keyswitch_redirect_key_velocity, "")
 
-    move_and_set_width(value_rule_keyswitch_redirect_cc, 360, 130, 35)
+    move_and_set_width(value_rule_keyswitch_redirect_cc, 360, y, 35)
     set_text(value_rule_keyswitch_redirect_cc, "")
-    init_label(label_rule_keyswitch_action_cc_slash, "/", 395, 130, 15)
-    move_and_set_width(value_rule_keyswitch_redirect_cc_value, 410, 130, 35)
+    init_label(label_rule_keyswitch_redirect_cc_slash, "/", 395, y, 15)
+    move_and_set_width(value_rule_keyswitch_redirect_cc_value, 410, y, 35)
     set_text(value_rule_keyswitch_redirect_cc_value, "")
 
+    move_and_set_width(value_rule_keyswitch_redirect_program, 360, y, 35)
+    set_text(value_rule_keyswitch_redirect_program, "")
+
     set_text(button_rule_keyswitch_redirect_midi_learn, "MIDI Learn")
-    move_and_set_width(button_rule_keyswitch_redirect_midi_learn, 485, 130, 60)
+    move_and_set_width(button_rule_keyswitch_redirect_midi_learn, 485, y, 60)
 
+    y := y + 20
+    init_label(label_rule_keyswitch_source_channel, "Source", 135, y, 55)
+    move_and_set_width(menu_rule_keyswitch_source_channel, 200, y, 60)
+    add_menu_item(menu_rule_keyswitch_source_channel, "Default", 0)
+    add_menu_item(menu_rule_keyswitch_source_channel, "Omni", -1)
+    init_channel_menu(menu_rule_keyswitch_source_channel, 16)
 
-    init_label(label_rule_keyswitch_source_channel, "Source", 140, 150, 50)
-    move_and_set_width(value_rule_keyswitch_source_channel, 200, 150, 35)
-    set_text(value_rule_keyswitch_source_channel, "")
-    init_info_label(label_rule_keyswitch_source_name, 0, "[A] 1", 235, 150, 25)
-    init_info_label(label_rule_keyswitch_source_info, 9, "(0 = all channels)", 275, 150, 200)
-
-
-    init_label(label_rule_keyswitch_target_channel, "Target", 140, 170, 50)
-    move_and_set_width(value_rule_keyswitch_target_channel, 200, 170, 35)
-    set_text(value_rule_keyswitch_target_channel, "")
-    init_info_label(label_rule_keyswitch_target_name, 0, "[A] 1", 235, 170, 25)
-    init_info_label(label_rule_keyswitch_target_info, 9, "(0 = use default target channel for rule)", 275, 170, 200)
+    y := y + 20
+    init_label(label_rule_keyswitch_target_channel, "Target", 135, y, 55)
+    move_and_set_width(menu_rule_keyswitch_target_channel, 200, y, 60)
+    add_menu_item(menu_rule_keyswitch_target_channel, "Default", 0)
+    add_menu_item(menu_rule_keyswitch_target_channel, "Null", -1)
+    init_channel_menu(menu_rule_keyswitch_target_channel, 64)
 
     read_persistent_var(menu_rules)
     gui_update_for_selected_rule()
 end macro
 
+
+function init_channel_menu(menu, channels)
+    for i := 1 to channels
+        name := get_midi_channel_name(i)
+        add_menu_item(menu, name, i)
+    end for
+end function
 
 { CONVENIENCE MACROS }
 
@@ -217,6 +310,7 @@ end macro
 
 { GUI FUNCTIONS }
 
+
 { Returns the index of the selected rule in the UI }
 function gui_get_selected_rule() -> idx
     idx := get_control_par(get_ui_id(menu_rules), CONTROL_PAR_SELECTED_ITEM_IDX)
@@ -236,29 +330,21 @@ function _gui_set_channel_info_label(label, channel)
 end function
 
 
-{ Update all MIDI channel name labels in the UI to reflect the currently configured channels. }
-function gui_update_midi_channel_names
-    _gui_set_channel_info_label(label_rule_keyswitch_channel_name, value_rule_keyswitch_channel)
-    _gui_set_channel_info_label(label_rule_target_name, value_rule_target_channel)
-    if value_rule_keyswitch_source_channel = 0
-        set_text(label_rule_keyswitch_source_name, "All")
-    else
-        _gui_set_channel_info_label(label_rule_keyswitch_source_name, value_rule_keyswitch_source_channel)
-    end if
-    if value_rule_keyswitch_target_channel = 0
-        _gui_set_channel_info_label(label_rule_keyswitch_target_name, value_rule_target_channel)
-    else
-        _gui_set_channel_info_label(label_rule_keyswitch_target_name, value_rule_keyswitch_target_channel)
-    end if
-end function
-
-
 { Adjusts all the UI elements to reflect the currently selected item in the rules menu. }
 function gui_update_for_selected_rule()
     rule := gui_get_selected_rule()
     text_rule_name := rules[rule].name
-    value_rule_keyswitch_channel := rules[rule].config[RULE_KEYSWITCH_CHANNEL]
-    value_rule_target_channel := rules[rule].config[RULE_TARGET_CHANNEL]
+
+    menu_global_cc_hanging := global_config[GLOBAL_CONFIG_CC_HANGING]
+    menu_rule_keyswitch_channel := rules[rule].config[RULE_KEYSWITCH_CHANNEL]
+    menu_rule_source_channel := rules[rule].config[RULE_SOURCE_CHANNEL]
+    menu_rule_target_channel := rules[rule].config[RULE_TARGET_CHANNEL]
+    menu_rule_cc_chasing := rules[rule].config[RULE_CC_CHASING]
+    if menu_rule_cc_chasing = 2
+        set_text(label_rule_cc_chasing_info, "Chases CCs 1, 2, 11, 64-69")
+    else
+        set_text(label_rule_cc_chasing_info, "")
+    end if
 
     button_rule_bypass := 1 - rules[rule].config[RULE_ENABLED]
     menu_keyswitches := 0
@@ -266,7 +352,6 @@ function gui_update_for_selected_rule()
            ks := rules[rule].keyswitches[i]
            if ks # -1
                name := get_keyswitch_name(ks)
-               { name := "CC128/128" }
                set_menu_item_str(get_ui_id(menu_keyswitches), i, name)
                set_menu_item_visibility(get_ui_id(menu_keyswitches), i, 1)
            else
@@ -277,57 +362,82 @@ function gui_update_for_selected_rule()
            end if
     end for
     gui_update_for_selected_keyswitch()
-    gui_update_midi_channel_names()
 end function
 
 
 { Set visibility of all controls in the keyswitch section by context of the keyswitch configuration. }
 function gui_set_keyswitch_section_visibility(ks, redirect)
-    { section control, section info label, general redirect controls, key redirect controls, CC redirect controls }
-    declare params[5]
-    for j := 0 to 4
+    { section control, ks note controls, ks cc controls, ks program controls,
+      section info label, general redirect controls, key redirect controls,
+      CC redirect controls, Prog redirect controls }
+    declare params[9]
+    for j := 0 to 8
         params[j] := HIDE_WHOLE_CONTROL
     end for
     if ks >= 0
+        { Keyswitch is defined (not empty) }
         params[0] := HIDE_PART_NOTHING
-        params[1] := HIDE_PART_BG
-        if redirect >= 0
+        params[4] := HIDE_PART_BG
+        if ks < 128
+            params[1] := HIDE_PART_NOTHING
+        else if ks < 256
+            params[3] := HIDE_PART_NOTHING
+        else
             params[2] := HIDE_PART_NOTHING
+        end if
+        if redirect >= 0
+            params[5] := HIDE_PART_NOTHING
             if redirect < 128
-                params[3] := HIDE_PART_NOTHING
+                params[6] := HIDE_PART_NOTHING
+            else if redirect < 256
+                params[8] := HIDE_PART_NOTHING
             else
-                params[4] := HIDE_PART_NOTHING
+                params[7] := HIDE_PART_NOTHING
             end if
         end if
     end if
 
+    set_control_par(get_ui_id(label_rule_keyswitch), CONTROL_PAR_HIDE, params[0])
+    set_control_par(get_ui_id(menu_rule_keyswitch_type), CONTROL_PAR_HIDE, params[0])
     set_control_par(get_ui_id(label_rule_keyswitch_action), CONTROL_PAR_HIDE, params[0])
     set_control_par(get_ui_id(menu_rule_keyswitch_action), CONTROL_PAR_HIDE, params[0])
 
-    set_control_par(get_ui_id(label_rule_keyswitch_redirect_to), CONTROL_PAR_HIDE, params[2])
-    set_control_par(get_ui_id(menu_rule_keyswitch_redirect_type), CONTROL_PAR_HIDE, params[2])
+    set_control_par(get_ui_id(value_rule_keyswitch_key), CONTROL_PAR_HIDE, params[1])
+    set_control_par(get_ui_id(value_rule_keyswitch_cc), CONTROL_PAR_HIDE, params[2])
+    set_control_par(get_ui_id(label_rule_keyswitch_cc_slash), CONTROL_PAR_HIDE, params[2])
+    set_control_par(get_ui_id(value_rule_keyswitch_cc_value), CONTROL_PAR_HIDE, params[2])
+    set_control_par(get_ui_id(value_rule_keyswitch_program), CONTROL_PAR_HIDE, params[3])
 
-    set_control_par(get_ui_id(value_rule_keyswitch_redirect_key), CONTROL_PAR_HIDE, params[3])
-    set_control_par(get_ui_id(label_rule_keyswitch_redirect_key_velocity), CONTROL_PAR_HIDE, params[3])
-    set_control_par(get_ui_id(value_rule_keyswitch_redirect_key_velocity), CONTROL_PAR_HIDE, params[3])
 
-    set_control_par(get_ui_id(value_rule_keyswitch_redirect_cc), CONTROL_PAR_HIDE, params[4])
-    set_control_par(get_ui_id(label_rule_keyswitch_action_cc_slash), CONTROL_PAR_HIDE, params[4])
-    set_control_par(get_ui_id(value_rule_keyswitch_redirect_cc_value), CONTROL_PAR_HIDE, params[4])
+    set_control_par(get_ui_id(label_rule_keyswitch_redirect_to), CONTROL_PAR_HIDE, params[5])
+    set_control_par(get_ui_id(menu_rule_keyswitch_redirect_type), CONTROL_PAR_HIDE, params[5])
 
-    set_control_par(get_ui_id(button_rule_keyswitch_redirect_midi_learn), CONTROL_PAR_HIDE, params[2])
+    set_control_par(get_ui_id(value_rule_keyswitch_redirect_key), CONTROL_PAR_HIDE, params[6])
+    set_control_par(get_ui_id(label_rule_keyswitch_redirect_key_velocity), CONTROL_PAR_HIDE, params[6])
+    set_control_par(get_ui_id(value_rule_keyswitch_redirect_key_velocity), CONTROL_PAR_HIDE, params[6])
+
+    set_control_par(get_ui_id(value_rule_keyswitch_redirect_cc), CONTROL_PAR_HIDE, params[7])
+    set_control_par(get_ui_id(label_rule_keyswitch_redirect_cc_slash), CONTROL_PAR_HIDE, params[7])
+    set_control_par(get_ui_id(value_rule_keyswitch_redirect_cc_value), CONTROL_PAR_HIDE, params[7])
+
+    set_control_par(get_ui_id(value_rule_keyswitch_redirect_program), CONTROL_PAR_HIDE, params[8])
+
+    set_control_par(get_ui_id(button_rule_keyswitch_redirect_midi_learn), CONTROL_PAR_HIDE, params[5])
 
     set_control_par(get_ui_id(label_rule_keyswitch_source_channel), CONTROL_PAR_HIDE, params[0])
-    set_control_par(get_ui_id(value_rule_keyswitch_source_channel), CONTROL_PAR_HIDE, params[0])
-    set_control_par(get_ui_id(label_rule_keyswitch_source_name), CONTROL_PAR_HIDE, params[1])
-    set_control_par(get_ui_id(label_rule_keyswitch_source_info), CONTROL_PAR_HIDE, params[1])
+    set_control_par(get_ui_id(menu_rule_keyswitch_source_channel), CONTROL_PAR_HIDE, params[4])
 
     set_control_par(get_ui_id(label_rule_keyswitch_target_channel), CONTROL_PAR_HIDE, params[0])
-    set_control_par(get_ui_id(value_rule_keyswitch_target_channel), CONTROL_PAR_HIDE, params[0])
-    set_control_par(get_ui_id(label_rule_keyswitch_target_name), CONTROL_PAR_HIDE, params[1])
-    set_control_par(get_ui_id(label_rule_keyswitch_target_info), CONTROL_PAR_HIDE, params[1])
+    set_control_par(get_ui_id(menu_rule_keyswitch_target_channel), CONTROL_PAR_HIDE, params[4])
 end function
 
+function gui_update_keyswitch_name()
+    rule := gui_get_selected_rule()
+    idx := gui_get_selected_keyswitch()
+    ks := rules[rule].keyswitches[idx]
+    name := get_keyswitch_name(ks)
+    set_menu_item_str(get_ui_id(menu_keyswitches), idx, name)
+end function
 
 { Adjusts all the UI elements to reflect the currently selected keyswitch (for the current rule) }
 function gui_update_for_selected_keyswitch()
@@ -335,10 +445,26 @@ function gui_update_for_selected_keyswitch()
     idx := gui_get_selected_keyswitch()
     ks := rules[rule].keyswitches[idx]
     redirect := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_REDIRECT]
-    value_rule_keyswitch_source_channel := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_SOURCE_CHANNEL]
-    value_rule_keyswitch_target_channel := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_TARGET_CHANNEL]
+    menu_rule_keyswitch_source_channel := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_SOURCE_CHANNEL]
+    menu_rule_keyswitch_target_channel := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_TARGET_CHANNEL]
+
 
     gui_set_keyswitch_section_visibility(ks, redirect)
+
+    if ks < 128
+        menu_rule_keyswitch_type := 0
+        { ks could be -1 (e.g. no keyswitches yet, and keyswitch section is hidden.) }
+        if ks >= 0
+            value_rule_keyswitch_key := ks
+        end if
+    else if ks < 256
+        menu_rule_keyswitch_type := 2
+        value_rule_keyswitch_program := ks - 128
+    else
+        menu_rule_keyswitch_type := 1
+        value_rule_keyswitch_cc := ks / 128 - 128
+        value_rule_keyswitch_cc_value := ks mod 128
+    end if
 
     if redirect < 0
         menu_rule_keyswitch_action := redirect
@@ -348,6 +474,9 @@ function gui_update_for_selected_keyswitch()
             value_rule_keyswitch_redirect_key := redirect
             menu_rule_keyswitch_redirect_type := 0
             value_rule_keyswitch_redirect_key_velocity := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_REDIRECT_VELOCITY]
+        else if redirect < 256
+            menu_rule_keyswitch_redirect_type := 2
+            value_rule_keyswitch_redirect_program := redirect - 128
         else
             menu_rule_keyswitch_redirect_type := 1
             value_rule_keyswitch_redirect_cc := redirect / 128 - 128
@@ -383,11 +512,28 @@ end function
 { Adds the given keyswitch number to the currently selected rule.  Triggered by MIDI learn. }
 function gui_append_keyswitch_to_selected_rule(ks)
     rule := gui_get_selected_rule()
-    idx := get_keyswitch_idx_for_rule(rule, ks)
+
+    if ks # -1
+        { Do not allow MIDI Learn to create duplicates of a keyswitch. (Though
+          that can be done manually.) }
+        idx := get_keyswitch_idx_for_rule(rule, ks)
+    else
+        idx := -1
+    end if
+
     if idx = -1
         { Determine the currently selected keyswitch in the GUI for later. }
         idx := gui_get_selected_keyswitch()
         count := get_num_keyswitches_for_rule(rule)
+        if ks = -1
+            if count > 0
+                ks := rules[rule].keyswitches[idx] + 1
+            else
+                { No existing keyswitches, use first note. }
+                ks := 0
+            end if
+        end if
+
         if count < MAX_KEYSWITCHES_PER_RULE
             name := get_keyswitch_name(ks)
             set_menu_item_str(get_ui_id(menu_keyswitches), count, name)
@@ -417,7 +563,7 @@ function gui_append_keyswitch_to_selected_rule(ks)
                 rules[rule].keyswitch_config[count, RULE_KEYSWITCH_TARGET_CHANNEL] := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_TARGET_CHANNEL]
                 rules[rule].keyswitch_config[count, RULE_KEYSWITCH_REDIRECT_VELOCITY] := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_REDIRECT_VELOCITY]
             else
-                { Initialize new keyswitch (not cloned) to blocked, all source channels, 
+                { Initialize new keyswitch (not cloned) to blocked, all source channels,
                   rule default target channel. }
                 rules[rule].keyswitch_config[count, RULE_KEYSWITCH_REDIRECT] := -1
                 rules[rule].keyswitch_config[count, RULE_KEYSWITCH_SOURCE_CHANNEL] := 0
@@ -429,6 +575,7 @@ function gui_append_keyswitch_to_selected_rule(ks)
         else
             message("ERROR: too many keyswitches for this rule, can't add.")
         end if
+        call build_ks_maps
     else
         { Keyswitch already exists, so select it in UI instead }
         menu_keyswitches := idx
@@ -469,12 +616,32 @@ function gui_set_selected_keyswitch_by_ks(ks)
     if idx # -1
         menu_keyswitches := idx
         call gui_update_for_selected_keyswitch
-        call gui_update_midi_channel_names
     else
         name := get_keyswitch_name(ks)
         message("Keyswitch " & name & " not found for this rule")
     end if
 end function
+
+
+
+{ Configures the active keyswitch parameters from the current UI settings }
+function gui_set_selected_keyswitch_from_ui
+    if menu_rule_keyswitch_type = 0
+        { Key}
+        ks := value_rule_keyswitch_key
+    else if menu_rule_keyswitch_type = 2
+        { Program }
+        ks := 128 + value_rule_keyswitch_program
+    else
+        { CC }
+        ks := 128*128 + value_rule_keyswitch_cc * 128 + value_rule_keyswitch_cc_value
+    end if
+    rule := gui_get_selected_rule()
+    idx := gui_get_selected_keyswitch()
+    rules[rule].keyswitches[idx] := ks
+    call gui_update_for_selected_keyswitch
+end function
+
 
 
 { Configures the redirect keyswitch for the currently selected keyswitch.  Triggered
@@ -495,6 +662,9 @@ function gui_set_selected_keyswitch_redirect_from_ui
     if menu_rule_keyswitch_redirect_type = 0
         { Key}
         ks := value_rule_keyswitch_redirect_key
+    else if menu_rule_keyswitch_redirect_type = 2
+        { Program }
+        ks := 128 + value_rule_keyswitch_redirect_program
     else
         { CC }
         ks := 128*128 + value_rule_keyswitch_redirect_cc * 128 + value_rule_keyswitch_redirect_cc_value
@@ -503,8 +673,11 @@ function gui_set_selected_keyswitch_redirect_from_ui
 end function
 
 
-
 { EVENT HANDLERS }
+
+on ui_control(menu_global_cc_hanging)
+    global_config[GLOBAL_CONFIG_CC_HANGING] := menu_global_cc_hanging
+end on
 
 { Selected rule changed }
 on ui_control(menu_rules)
@@ -515,14 +688,9 @@ end on
 { Add Rule button clicked }
 on ui_control(button_add)
     { Find empty available slot for rule }
-    idx := -1
-    for i := 0 to MAX_RULES - 1
-        if idx = -1 and rules[i].config[RULE_DEFINED] = 0
-            idx := i
-        end if
-    end for
+    idx := get_next_rule_idx()
     if idx = -1
-        message("Can't add a new rule, already at limit of " & MAX_RULES)
+        message("Can't add a new rule, already at limit of " & MAX_GUI_RULES)
     else
         initialize_rule(idx, "New Rule")
         set_menu_item_str(get_ui_id(menu_rules), idx, rules[idx].name)
@@ -539,7 +707,7 @@ on ui_control(button_remove)
     rule := gui_get_selected_rule()
     { Determine closest adjacent rule to select next. }
     target := -1
-    for i := 0 to MAX_RULES - 1
+    for i := 0 to MAX_GUI_RULES - 1
         if rules[i].config[RULE_DEFINED] = 1 and i # rule and ...
          (target = -1 or abs(rule - i) < abs(rule - target))
             target := i
@@ -561,6 +729,25 @@ on ui_control(button_remove)
     button_remove := 0
 end on
 
+on ui_control(button_rule_clone)
+    rule := gui_get_selected_rule()
+    if rule >= 0
+        { Find empty available slot for rule }
+        idx := get_next_rule_idx()
+        if idx = -1
+            message("Can't add a new rule, already at limit of " & MAX_GUI_RULES)
+        else
+            copy_rule(rule, idx)
+            rules[idx].name := "CLONE - " & rules[rule].name
+            set_menu_item_str(get_ui_id(menu_rules), idx, rules[idx].name)
+            set_menu_item_visibility(get_ui_id(menu_rules), idx, 1)
+            menu_rules := idx
+            call gui_update_for_selected_rule
+        end if
+    end if
+    button_rule_clone := 0
+end on
+
 
 { Rule name text entry changed }
 on ui_control(text_rule_name)
@@ -577,26 +764,43 @@ on ui_control(button_rule_bypass)
 end on
 
 
-{ Keyswitch channel value changed }
-on ui_control(value_rule_keyswitch_channel)
+{ Keyswitch channel menu changed }
+on ui_control(menu_rule_keyswitch_channel)
     gui_clear_active_routes_for_all_channels()
-    gui_set_selected_rule_config(RULE_KEYSWITCH_CHANNEL, value_rule_keyswitch_channel)
-    call gui_update_midi_channel_names
+    gui_set_selected_rule_config(RULE_KEYSWITCH_CHANNEL, menu_rule_keyswitch_channel)
 end on
 
 
-{ Target channel value changed }
-on ui_control(value_rule_target_channel)
+{ Source channel menu  changed }
+on ui_control(menu_rule_source_channel)
     gui_clear_active_routes_for_all_channels()
-    gui_set_selected_rule_config(RULE_TARGET_CHANNEL, value_rule_target_channel)
-    call gui_update_midi_channel_names
+    gui_set_selected_rule_config(RULE_SOURCE_CHANNEL, menu_rule_source_channel)
 end on
 
+
+{ Target channel menu  changed }
+on ui_control(menu_rule_target_channel)
+    gui_clear_active_routes_for_all_channels()
+    gui_set_selected_rule_config(RULE_TARGET_CHANNEL, menu_rule_target_channel)
+end on
+
+{ CC chasing menu changed }
+on ui_control(menu_rule_cc_chasing)
+    gui_set_selected_rule_config(RULE_CC_CHASING, menu_rule_cc_chasing)
+    call gui_update_for_selected_rule
+end on
 
 { Selected keyswitch changed }
 on ui_control(menu_keyswitches)
     call gui_update_for_selected_keyswitch
-    call gui_update_midi_channel_names
+end on
+
+
+{ Keyswitch New button clicked }
+on ui_control(button_keyswitch_new)
+    ks := -1
+    gui_append_keyswitch_to_selected_rule(ks)
+    button_keyswitch_new := 0
 end on
 
 
@@ -607,14 +811,6 @@ on ui_control(button_keyswitch_midi_learn)
     if button_keyswitch_midi_learn = 0
         call build_ks_maps
     end if
-end on
-
-
-
-{ Keyswitch Redirect MIDI Learn button clicked }
-on ui_control(button_keyswitch_midi_find)
-    button_keyswitch_midi_learn := 0
-    button_rule_keyswitch_redirect_midi_learn := 0
 end on
 
 
@@ -648,11 +844,67 @@ on ui_control(button_keyswitch_remove)
 end on
 
 
+{ Keyswitch Redirect MIDI Learn button clicked }
+on ui_control(button_keyswitch_midi_find)
+    button_keyswitch_midi_learn := 0
+    button_rule_keyswitch_redirect_midi_learn := 0
+end on
+
+
 { Keyswitch Clear button clicked }
 on ui_control(button_keyswitch_clear)
     call gui_clear_keyswitches_for_selected_rule
     call build_ks_maps
     button_keyswitch_clear := 0
+end on
+
+{ Keyswitch redirect type menu (key or CC) changed }
+on ui_control(menu_rule_keyswitch_type)
+    if menu_rule_keyswitch_type = 0
+        { FIXME: get next available key}
+        ks := 0
+    else if menu_rule_keyswitch_type = 2
+        { FIXME: get next available program }
+        ks := 128
+    else
+        { FIXME: get next available CC }
+        ks := 130*128 { CC-2 value 0 }
+    end if
+    rule := gui_get_selected_rule()
+    idx := gui_get_selected_keyswitch()
+    rules[rule].keyswitches[idx] := ks
+    call gui_update_for_selected_keyswitch
+    call gui_update_keyswitch_name
+end on
+
+
+{ Keyswitch redirect to note value changed }
+on ui_control(value_rule_keyswitch_key)
+    call gui_set_selected_keyswitch_from_ui
+    call build_ks_maps
+    call gui_update_keyswitch_name
+end on
+
+{ Keyswitch redirect to CC number changed }
+on ui_control(value_rule_keyswitch_cc)
+    call gui_set_selected_keyswitch_from_ui
+    call build_ks_maps
+    call gui_update_keyswitch_name
+end on
+
+
+{ Keyswitch redirect to CC value }
+on ui_control(value_rule_keyswitch_cc_value)
+    call gui_set_selected_keyswitch_from_ui
+    call build_ks_maps
+    call gui_update_keyswitch_name
+end on
+
+{ Keyswitch redirect to CC value }
+on ui_control(value_rule_keyswitch_program)
+    call gui_set_selected_keyswitch_from_ui
+    call build_ks_maps
+    call gui_update_keyswitch_name
 end on
 
 
@@ -668,6 +920,8 @@ on ui_control(menu_rule_keyswitch_redirect_type)
     if menu_rule_keyswitch_redirect_type = 0
         redirect := 0   { C-2 }
         gui_set_selected_keyswitch_config(RULE_KEYSWITCH_REDIRECT_VELOCITY, 127)
+    else if menu_rule_keyswitch_redirect_type = 2
+        redirect := 128 { Prog 0 }
     else
         redirect := 130*128 { CC-2 value 0 }
     end if
@@ -700,6 +954,10 @@ on ui_control(value_rule_keyswitch_redirect_cc_value)
     call gui_set_selected_keyswitch_redirect_from_ui
 end on
 
+{ Keyswitch redirect to CC value }
+on ui_control(value_rule_keyswitch_redirect_program)
+    call gui_set_selected_keyswitch_redirect_from_ui
+end on
 
 
 { Keyswitch Redirect MIDI Learn button clicked }
@@ -710,18 +968,15 @@ end on
 
 
 { Keyswitch source channel value changed }
-on ui_control(value_rule_keyswitch_source_channel)
-    gui_set_selected_keyswitch_config(RULE_KEYSWITCH_SOURCE_CHANNEL, value_rule_keyswitch_source_channel)
+on ui_control(menu_rule_keyswitch_source_channel)
+    gui_set_selected_keyswitch_config(RULE_KEYSWITCH_SOURCE_CHANNEL, menu_rule_keyswitch_source_channel)
     call build_ks_maps
     call gui_clear_active_routes_for_all_channels
-    call gui_update_midi_channel_names
 end on
 
-
 { Keyswitch target channel value changed }
-on ui_control(value_rule_keyswitch_target_channel)
-    gui_set_selected_keyswitch_config(RULE_KEYSWITCH_TARGET_CHANNEL, value_rule_keyswitch_target_channel)
+on ui_control(menu_rule_keyswitch_target_channel)
+    gui_set_selected_keyswitch_config(RULE_KEYSWITCH_TARGET_CHANNEL, menu_rule_keyswitch_target_channel)
     call build_ks_maps
     call gui_clear_active_routes_for_all_channels
-    call gui_update_midi_channel_names
 end on
