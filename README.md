@@ -1,6 +1,8 @@
 # FlexRouter
 
-*Version 2 is released!  Unfortunately it is not backward compatible with version 1, so you will need to recreate your rules.  Sorry. :(*
+**Version 2 is released!  Unfortunately it is not backward compatible with version 1, so you will need to recreate your rules.  Sorry. :(**
+
+Quick link: [get the compiled script for the latest version](https://urandom.ca/flexrouter/latest)
 
 
 ## What is it?
