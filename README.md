@@ -35,7 +35,6 @@ Here are just a few random use-cases that can be solved using FlexRouter:
 * Use UACC with Spitfire libraries, but cherry-pick certain articulations from
   other libraries on other channels
 * Use standard notes on channel 16 to control Spitfire via UACC on channel 1
-* 
 
 There's also a [walkthrough video](https://www.youtube.com/watch?v=FddWrEwaNmM) that shows how to implement some of these use-cases.
 (Note, the video shows version 1, but all the examples still work with version 2.)
