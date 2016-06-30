@@ -56,29 +56,7 @@ macro gui_initialize
     {Program controls (when redirect type is set to Progran Change) }
     declare ui_value_edit value_rule_keyswitch_program (0, 127, 1)
     declare ui_switch button_keyswitch_midi_learn
-
-
-    { Keyswitch action menu (block, passthrough, redirect) }
-    declare ui_label label_rule_keyswitch_action (1,1)
-    declare ui_menu menu_rule_keyswitch_action
-
-    { Redirect controls (when action is set to redirect) }
-    declare ui_label label_rule_keyswitch_redirect_to (1,1)
-    { Redirect type menu (key or CC) }
-    declare ui_menu menu_rule_keyswitch_redirect_type
-
-    { Key redirect controls (when redirect type is set to key) }
-    declare ui_value_edit value_rule_keyswitch_redirect_key (0, 127, VALUE_EDIT_MODE_NOTE_NAMES)
-    declare ui_label label_rule_keyswitch_redirect_key_velocity (1,1)
-    declare ui_value_edit value_rule_keyswitch_redirect_key_velocity (0, 127, 1)
-
-    { CC redirect controls (when redirect type is set to CC) }
-    declare ui_value_edit value_rule_keyswitch_redirect_cc (2, 127, 1)
-    declare ui_label label_rule_keyswitch_redirect_cc_slash (1,1)
-    declare ui_value_edit value_rule_keyswitch_redirect_cc_value (0, 127, 1)
-
-    { Program redirect controls (when redirect type is set to Progran Change) }
-    declare ui_value_edit value_rule_keyswitch_redirect_program (0, 127, 1)
+    declare ui_switch button_keyswitch_midi_learn_inc
 
 
     { Keyswitch source channel }
@@ -89,8 +67,41 @@ macro gui_initialize
     declare ui_label label_rule_keyswitch_target_channel (1,1)
     declare ui_menu menu_rule_keyswitch_target_channel
 
+    { Keyswitch flags }
+    declare ui_label label_rule_keyswitch_flags (1,1)
+    declare ui_switch switch_rule_keyswitch_flags_hold_notes
+
+    { Keyswitch action menu (block, passthrough, redirect) }
+    declare ui_label label_rule_keyswitch_action (1,1)
+    declare ui_menu menu_rule_keyswitch_action
+
+
+
+    { Redirect controls (when action is set to redirect) }
+    declare ui_label label_rule_keyswitch_redirect_to (1,1)
+    declare ui_button button_rule_keyswitch_addremove[MAX_GUI_REDIRECTS_PER_KEYSWITCH]
+
+    { Redirect type menu (key or CC) }
+    declare ui_menu menu_rule_keyswitch_redirect_type[MAX_GUI_REDIRECTS_PER_KEYSWITCH]
+
+    { Key redirect controls (when redirect type is set to key) }
+    declare ui_value_edit value_rule_keyswitch_redirect_key[MAX_GUI_REDIRECTS_PER_KEYSWITCH] (0, 127, VALUE_EDIT_MODE_NOTE_NAMES)
+    declare ui_label label_rule_keyswitch_redirect_key_velocity[MAX_GUI_REDIRECTS_PER_KEYSWITCH] (1,1)
+    declare ui_value_edit value_rule_keyswitch_redirect_key_velocity[MAX_GUI_REDIRECTS_PER_KEYSWITCH] (0, 127, 1)
+
+    { CC redirect controls (when redirect type is set to CC) }
+    declare ui_value_edit value_rule_keyswitch_redirect_cc[MAX_GUI_REDIRECTS_PER_KEYSWITCH] (2, 127, 1)
+    declare ui_label label_rule_keyswitch_redirect_cc_slash[MAX_GUI_REDIRECTS_PER_KEYSWITCH] (1,1)
+    declare ui_value_edit value_rule_keyswitch_redirect_cc_value[MAX_GUI_REDIRECTS_PER_KEYSWITCH] (0, 127, 1)
+
+    { Program redirect controls (when redirect type is set to Progran Change) }
+    declare ui_value_edit value_rule_keyswitch_redirect_program[MAX_GUI_REDIRECTS_PER_KEYSWITCH] (0, 127, 1)
+
+
     { Keyswitch MIDI Learn button }
-    declare ui_switch button_rule_keyswitch_redirect_midi_learn
+    declare ui_switch button_rule_keyswitch_redirect_midi_learn[MAX_GUI_REDIRECTS_PER_KEYSWITCH]
+    { If not -1, then indicates the index of the keyswitch redirect that's learning. }
+    declare keyswitch_redirect_midi_learn_index := -1
 
     declare y := 10
 
@@ -98,7 +109,7 @@ macro gui_initialize
 
 
     make_persistent(menu_rules)
-    set_ui_height_px(310)
+    set_ui_height_px(290 + 20 * MAX_GUI_REDIRECTS_PER_KEYSWITCH)
 
     init_label(label_global_config, "Global Config ", 70, y, 75)
     move_and_set_width(menu_global_cc_hanging, 150, y, 150)
@@ -173,18 +184,23 @@ macro gui_initialize
     set_text(button_keyswitch_new, "New")
     move_and_set_width(button_keyswitch_new, 290, y, 35)
 
-    set_text(button_keyswitch_midi_learn, "Learn New")
-    move_and_set_width(button_keyswitch_midi_learn, 330, y, 60)
+    set_text(button_keyswitch_midi_learn, "Learn")
+    move_and_set_width(button_keyswitch_midi_learn, 330, y, 40)
 
-    set_text(button_keyswitch_remove, "Remove")
-    move_and_set_width(button_keyswitch_remove, 395, y, 50)
+    set_text(button_keyswitch_midi_learn_inc, "Learn++")
+    move_and_set_width(button_keyswitch_midi_learn_inc, 375, y, 50)
 
     set_text(button_keyswitch_midi_find, "MIDI Find")
-    move_and_set_width(button_keyswitch_midi_find, 460, y, 55)
+    move_and_set_width(button_keyswitch_midi_find, 430, y, 55)
 
-    set_text(button_keyswitch_clear, "Clear All")
-    move_and_set_width(button_keyswitch_clear, 520, y, 50)
-    center(button_keyswitch_clear)
+    set_text(button_keyswitch_remove, "Remove")
+    move_and_set_width(button_keyswitch_remove, 515, y, 50)
+
+    // Remove Clear button for now.  Debating if this is worth having.
+    hide(button_keyswitch_clear)
+    //set_text(button_keyswitch_clear, "Clear All")
+    //move_and_set_width(button_keyswitch_clear, 560, y, 50)
+    //center(button_keyswitch_clear)
 
 
     y := y + 20
@@ -207,42 +223,6 @@ macro gui_initialize
     move_and_set_width(value_rule_keyswitch_program, 245, y, 35)
     set_text(value_rule_keyswitch_program, "")
 
-
-    y := y + 20
-    init_label(label_rule_keyswitch_action, "KS Action", 135, y, 55)
-
-    move_and_set_width(menu_rule_keyswitch_action, 200, y, 80)
-    add_menu_item(menu_rule_keyswitch_action, "Block", -1)
-    add_menu_item(menu_rule_keyswitch_action, "Passthrough", -2)
-    add_menu_item(menu_rule_keyswitch_action, "Redirect", 0)
-
-    init_label(label_rule_keyswitch_redirect_to, "to", 285, y, 25)
-    center(label_rule_keyswitch_redirect_to)
-
-    move_and_set_width(menu_rule_keyswitch_redirect_type, 315, y, 40)
-    add_menu_item(menu_rule_keyswitch_redirect_type, "Key", 0)
-    add_menu_item(menu_rule_keyswitch_redirect_type, "CC", 1)
-    add_menu_item(menu_rule_keyswitch_redirect_type, "Prog", 2)
-
-    move_and_set_width(value_rule_keyswitch_redirect_key, 360, y, 40)
-    set_text(value_rule_keyswitch_redirect_key, "")
-    init_label(label_rule_keyswitch_redirect_key_velocity, "Velocity", 400, y, 45)
-    center(label_rule_keyswitch_redirect_key_velocity)
-    move_and_set_width(value_rule_keyswitch_redirect_key_velocity, 445, y, 35)
-    set_text(value_rule_keyswitch_redirect_key_velocity, "")
-
-    move_and_set_width(value_rule_keyswitch_redirect_cc, 360, y, 35)
-    set_text(value_rule_keyswitch_redirect_cc, "")
-    init_label(label_rule_keyswitch_redirect_cc_slash, "/", 395, y, 15)
-    move_and_set_width(value_rule_keyswitch_redirect_cc_value, 410, y, 35)
-    set_text(value_rule_keyswitch_redirect_cc_value, "")
-
-    move_and_set_width(value_rule_keyswitch_redirect_program, 360, y, 35)
-    set_text(value_rule_keyswitch_redirect_program, "")
-
-    set_text(button_rule_keyswitch_redirect_midi_learn, "MIDI Learn")
-    move_and_set_width(button_rule_keyswitch_redirect_midi_learn, 485, y, 60)
-
     y := y + 20
     init_label(label_rule_keyswitch_source_channel, "Source", 135, y, 55)
     move_and_set_width(menu_rule_keyswitch_source_channel, 200, y, 60)
@@ -257,10 +237,69 @@ macro gui_initialize
     add_menu_item(menu_rule_keyswitch_target_channel, "Null", -1)
     init_channel_menu(menu_rule_keyswitch_target_channel, 64)
 
+    y := y + 20
+    init_label(label_rule_keyswitch_flags, "Flags", 135, y, 55)
+    set_text(switch_rule_keyswitch_flags_hold_notes, "Hold redirected notes until next keyswitch")
+    move_and_set_width(switch_rule_keyswitch_flags_hold_notes, 200, y, 200)
+
+    y := y + 20
+    init_label(label_rule_keyswitch_action, "KS Action", 135, y, 55)
+
+    move_and_set_width(menu_rule_keyswitch_action, 200, y, 80)
+    add_menu_item(menu_rule_keyswitch_action, "Block", KEYSWITCH_ACTION_BLOCK)
+    add_menu_item(menu_rule_keyswitch_action, "Passthrough", KEYSWITCH_ACTION_PASSTHROUGH)
+    add_menu_item(menu_rule_keyswitch_action, "Redirect", KEYSWITCH_ACTION_REDIRECT)
+
+    set_label_properties(label_rule_keyswitch_redirect_to, "to", 0, 1)
+    set_bounds(label_rule_keyswitch_redirect_to, 285, y, 25)
+
+    iterate_macro(configure_keyswitch_redirect_controls) := 0 to MAX_GUI_REDIRECTS_PER_KEYSWITCH - 1
+    set_control_par(button_rule_keyswitch_addremove[0], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+
+    y := y - 80
+
     read_persistent_var(menu_rules)
     gui_update_for_selected_rule()
 end macro
 
+macro configure_keyswitch_redirect_controls(#n#)
+
+    if #n# > 0
+        set_button_properties(button_rule_keyswitch_addremove[#n#], "+")
+        set_control_par(button_rule_keyswitch_addremove[#n#], CONTROL_PAR_TEXT_ALIGNMENT, 1)
+        set_bounds(button_rule_keyswitch_addremove[#n#], 285, y, 25)
+    end if
+    set_bounds(menu_rule_keyswitch_redirect_type[#n#], 315, y, 40)
+
+    // move_and_set_width(menu_rule_keyswitch_redirect_type, 315, y, 40)
+    add_menu_item(menu_rule_keyswitch_redirect_type#n#, "Key", 0)
+    add_menu_item(menu_rule_keyswitch_redirect_type#n#, "CC", 1)
+    add_menu_item(menu_rule_keyswitch_redirect_type#n#, "Prog", 2)
+
+    move_and_set_width(value_rule_keyswitch_redirect_key#n#, 360, y, 40)
+    set_text(value_rule_keyswitch_redirect_key#n#, "")
+    init_label(label_rule_keyswitch_redirect_key_velocity#n#, "Velocity", 400, y, 45)
+    center(label_rule_keyswitch_redirect_key_velocity#n#)
+
+    move_and_set_width(value_rule_keyswitch_redirect_key_velocity#n#, 445, y, 35)
+    set_text(value_rule_keyswitch_redirect_key_velocity#n#, "")
+
+    move_and_set_width(value_rule_keyswitch_redirect_cc#n#, 360, y, 35)
+
+    set_text(value_rule_keyswitch_redirect_cc#n#, "")
+    init_label(label_rule_keyswitch_redirect_cc_slash#n#, "/", 395, y, 15)
+
+    move_and_set_width(value_rule_keyswitch_redirect_cc_value#n#, 410, y, 35)
+    set_text(value_rule_keyswitch_redirect_cc_value#n#, "")
+
+    move_and_set_width(value_rule_keyswitch_redirect_program#n#, 360, y, 35)
+    set_text(value_rule_keyswitch_redirect_program#n#, "")
+
+    set_text(button_rule_keyswitch_redirect_midi_learn#n#, "MIDI Learn")
+    move_and_set_width(button_rule_keyswitch_redirect_midi_learn#n#, 485, y, 60)
+
+    y := y + 20
+end macro
 
 function init_channel_menu(menu, channels)
     for i := 1 to channels
@@ -349,8 +388,8 @@ function gui_update_for_selected_rule()
     button_rule_bypass := 1 - rules[rule].config[RULE_ENABLED]
     menu_keyswitches := 0
        for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
-           ks := rules[rule].keyswitches[i]
-           if ks # -1
+           ks := rules[rule].keyswitch[i].evcode
+           if ks # KEYSWITCH_UNDEFINED
                name := get_keyswitch_name(ks)
                set_menu_item_str(get_ui_id(menu_keyswitches), i, name)
                set_menu_item_visibility(get_ui_id(menu_keyswitches), i, 1)
@@ -366,16 +405,18 @@ end function
 
 
 { Set visibility of all controls in the keyswitch section by context of the keyswitch configuration. }
-function gui_set_keyswitch_section_visibility(ks, redirect)
+function gui_set_keyswitch_section_visibility(rule, idx, ks, action)
     { section control, ks note controls, ks cc controls, ks program controls,
       section info label, general redirect controls, key redirect controls,
       CC redirect controls, Prog redirect controls }
     declare params[9]
-    for j := 0 to 8
-        params[j] := HIDE_WHOLE_CONTROL
-    end for
-    if ks >= 0
-        { Keyswitch is defined (not empty) }
+    macro reset_params()
+        for j := 0 to 8
+            params[j] := HIDE_WHOLE_CONTROL
+        end for
+    end macro
+    reset_params()
+    if ks # KEYSWITCH_UNDEFINED
         params[0] := HIDE_PART_NOTHING
         params[4] := HIDE_PART_BG
         if ks < 128
@@ -384,16 +425,6 @@ function gui_set_keyswitch_section_visibility(ks, redirect)
             params[3] := HIDE_PART_NOTHING
         else
             params[2] := HIDE_PART_NOTHING
-        end if
-        if redirect >= 0
-            params[5] := HIDE_PART_NOTHING
-            if redirect < 128
-                params[6] := HIDE_PART_NOTHING
-            else if redirect < 256
-                params[8] := HIDE_PART_NOTHING
-            else
-                params[7] := HIDE_PART_NOTHING
-            end if
         end if
     end if
 
@@ -408,33 +439,69 @@ function gui_set_keyswitch_section_visibility(ks, redirect)
     set_control_par(get_ui_id(value_rule_keyswitch_cc_value), CONTROL_PAR_HIDE, params[2])
     set_control_par(get_ui_id(value_rule_keyswitch_program), CONTROL_PAR_HIDE, params[3])
 
-
-    set_control_par(get_ui_id(label_rule_keyswitch_redirect_to), CONTROL_PAR_HIDE, params[5])
-    set_control_par(get_ui_id(menu_rule_keyswitch_redirect_type), CONTROL_PAR_HIDE, params[5])
-
-    set_control_par(get_ui_id(value_rule_keyswitch_redirect_key), CONTROL_PAR_HIDE, params[6])
-    set_control_par(get_ui_id(label_rule_keyswitch_redirect_key_velocity), CONTROL_PAR_HIDE, params[6])
-    set_control_par(get_ui_id(value_rule_keyswitch_redirect_key_velocity), CONTROL_PAR_HIDE, params[6])
-
-    set_control_par(get_ui_id(value_rule_keyswitch_redirect_cc), CONTROL_PAR_HIDE, params[7])
-    set_control_par(get_ui_id(label_rule_keyswitch_redirect_cc_slash), CONTROL_PAR_HIDE, params[7])
-    set_control_par(get_ui_id(value_rule_keyswitch_redirect_cc_value), CONTROL_PAR_HIDE, params[7])
-
-    set_control_par(get_ui_id(value_rule_keyswitch_redirect_program), CONTROL_PAR_HIDE, params[8])
-
-    set_control_par(get_ui_id(button_rule_keyswitch_redirect_midi_learn), CONTROL_PAR_HIDE, params[5])
-
     set_control_par(get_ui_id(label_rule_keyswitch_source_channel), CONTROL_PAR_HIDE, params[0])
     set_control_par(get_ui_id(menu_rule_keyswitch_source_channel), CONTROL_PAR_HIDE, params[4])
 
     set_control_par(get_ui_id(label_rule_keyswitch_target_channel), CONTROL_PAR_HIDE, params[0])
     set_control_par(get_ui_id(menu_rule_keyswitch_target_channel), CONTROL_PAR_HIDE, params[4])
+
+    set_control_par(get_ui_id(label_rule_keyswitch_flags), CONTROL_PAR_HIDE, params[0])
+    set_control_par(get_ui_id(switch_rule_keyswitch_flags_hold_notes), CONTROL_PAR_HIDE, params[4])
+
+    for i := 0 to MAX_GUI_REDIRECTS_PER_KEYSWITCH - 1
+        // Initialize show/hide parameters based on keyswitch config context
+        reset_params()
+        evcode := rules[rule].keyswitch[idx].redirects[i].evcode
+        if action = KEYSWITCH_ACTION_REDIRECT
+            if evcode # KEYSWITCH_UNDEFINED
+                params[0] := HIDE_PART_NOTHING
+                if evcode < 128
+                    params[1] := HIDE_PART_NOTHING
+                else if evcode < 256
+                    params[3] := HIDE_PART_NOTHING
+                else
+                    params[2] := HIDE_PART_NOTHING
+                end if
+            end if
+        end if
+
+        if i = 0
+            set_control_par(label_rule_keyswitch_redirect_to, CONTROL_PAR_HIDE, params[0])
+        else
+            if evcode # KEYSWITCH_UNDEFINED and action = KEYSWITCH_ACTION_REDIRECT
+                set_button_properties(button_rule_keyswitch_addremove[i], "-")
+                set_control_par(button_rule_keyswitch_addremove[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+            else
+                set_button_properties(button_rule_keyswitch_addremove[i], "+")
+                // If the previous keyswitch redirect is defined, show the button.
+                if rules[rule].keyswitch[idx].redirects[i - 1].evcode # KEYSWITCH_UNDEFINED and ...
+                   action = KEYSWITCH_ACTION_REDIRECT
+                    set_control_par(button_rule_keyswitch_addremove[i], CONTROL_PAR_HIDE, HIDE_PART_NOTHING)
+                else
+                    set_control_par(button_rule_keyswitch_addremove[i], CONTROL_PAR_HIDE, HIDE_WHOLE_CONTROL)
+                end if
+            end if
+        end if
+
+        set_control_par(menu_rule_keyswitch_redirect_type[i], CONTROL_PAR_HIDE, params[0])
+
+        set_control_par(value_rule_keyswitch_redirect_key[i], CONTROL_PAR_HIDE, params[1])
+        set_control_par(label_rule_keyswitch_redirect_key_velocity[i], CONTROL_PAR_HIDE, params[1])
+        set_control_par(value_rule_keyswitch_redirect_key_velocity[i], CONTROL_PAR_HIDE, params[1])
+
+        set_control_par(value_rule_keyswitch_redirect_cc[i], CONTROL_PAR_HIDE, params[2])
+        set_control_par(label_rule_keyswitch_redirect_cc_slash[i], CONTROL_PAR_HIDE, params[2])
+        set_control_par(value_rule_keyswitch_redirect_cc_value[i], CONTROL_PAR_HIDE, params[2])
+
+        set_control_par(value_rule_keyswitch_redirect_program[i], CONTROL_PAR_HIDE, params[3])
+        set_control_par(button_rule_keyswitch_redirect_midi_learn[i], CONTROL_PAR_HIDE, params[0])
+    end for
 end function
 
 function gui_update_keyswitch_name()
     rule := gui_get_selected_rule()
     idx := gui_get_selected_keyswitch()
-    ks := rules[rule].keyswitches[idx]
+    ks := rules[rule].keyswitch[idx].evcode
     name := get_keyswitch_name(ks)
     set_menu_item_str(get_ui_id(menu_keyswitches), idx, name)
 end function
@@ -443,50 +510,49 @@ end function
 function gui_update_for_selected_keyswitch()
     rule := gui_get_selected_rule()
     idx := gui_get_selected_keyswitch()
-    ks := rules[rule].keyswitches[idx]
-    redirect := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_REDIRECT]
-    menu_rule_keyswitch_source_channel := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_SOURCE_CHANNEL]
-    menu_rule_keyswitch_target_channel := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_TARGET_CHANNEL]
+    ks := rules[rule].keyswitch[idx].evcode
+    action := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_ACTION]
+    flag := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_FLAGS]
 
+    menu_rule_keyswitch_source_channel := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_SOURCE_CHANNEL]
+    menu_rule_keyswitch_target_channel := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_TARGET_CHANNEL]
+    switch_rule_keyswitch_flags_hold_notes := flag .and. RULE_KEYSWITCH_FLAGS
 
-    gui_set_keyswitch_section_visibility(ks, redirect)
+    gui_set_keyswitch_section_visibility(rule, idx, ks, action)
 
     if ks < 128
         menu_rule_keyswitch_type := 0
-        { ks could be -1 (e.g. no keyswitches yet, and keyswitch section is hidden.) }
-        if ks >= 0
-            value_rule_keyswitch_key := ks
-        end if
+        value_rule_keyswitch_key := ks
     else if ks < 256
         menu_rule_keyswitch_type := 2
         value_rule_keyswitch_program := ks - 128
-    else
+    else if ks # KEYSWITCH_UNDEFINED
         menu_rule_keyswitch_type := 1
         value_rule_keyswitch_cc := ks / 128 - 128
         value_rule_keyswitch_cc_value := ks mod 128
     end if
 
-    if redirect < 0
-        menu_rule_keyswitch_action := redirect
-    else
-        menu_rule_keyswitch_action := 0
-        if redirect < 128
-            value_rule_keyswitch_redirect_key := redirect
-            menu_rule_keyswitch_redirect_type := 0
-            value_rule_keyswitch_redirect_key_velocity := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_REDIRECT_VELOCITY]
-        else if redirect < 256
-            menu_rule_keyswitch_redirect_type := 2
-            value_rule_keyswitch_redirect_program := redirect - 128
-        else
-            menu_rule_keyswitch_redirect_type := 1
-            value_rule_keyswitch_redirect_cc := redirect / 128 - 128
-            value_rule_keyswitch_redirect_cc_value := redirect mod 128
-        end if
-    end if
-    if redirect = -1
-        name := "(none)"
-    else
-        name := get_keyswitch_name(redirect)
+    menu_rule_keyswitch_action := action
+
+    // message("action: " & action)
+    if action = KEYSWITCH_ACTION_REDIRECT
+        macro update_keyswitch_redirect(#n#)
+            evcode := rules[rule].keyswitch[idx].redirects[#n#].evcode
+            if evcode < 128
+                velocity := rules[rule].keyswitch[idx].redirects[#n#].velocity
+                value_rule_keyswitch_redirect_key#n# := evcode
+                menu_rule_keyswitch_redirect_type#n# := 0
+                value_rule_keyswitch_redirect_key_velocity#n# := velocity
+            else if evcode < 256
+                menu_rule_keyswitch_redirect_type#n# := 2
+                value_rule_keyswitch_redirect_program#n# := evcode - 128
+            else if evcode # KEYSWITCH_UNDEFINED
+                menu_rule_keyswitch_redirect_type#n# := 1
+                value_rule_keyswitch_redirect_cc#n# := evcode / 128 - 128
+                value_rule_keyswitch_redirect_cc_value#n# := evcode mod 128
+            end if
+        end macro
+        iterate_macro(update_keyswitch_redirect) := 0 to MAX_GUI_REDIRECTS_PER_KEYSWITCH - 1
     end if
 end function
 
@@ -495,7 +561,7 @@ end function
 function gui_set_selected_rule_config(config, value)
     rule := gui_get_selected_rule()
     rules[rule].config[config] := value
-    call build_ks_maps
+    need_maps_rebuild := 1
 end function
 
 
@@ -509,11 +575,12 @@ function gui_clear_active_routes_for_all_channels()
 end function
 
 
-{ Adds the given keyswitch number to the currently selected rule.  Triggered by MIDI learn. }
+// Adds the given keyswitch number to the currently selected rule.  Triggered by MIDI learn and the
+// New button.
 function gui_append_keyswitch_to_selected_rule(ks)
     rule := gui_get_selected_rule()
 
-    if ks # -1
+    if ks # KEYSWITCH_UNDEFINED
         { Do not allow MIDI Learn to create duplicates of a keyswitch. (Though
           that can be done manually.) }
         idx := get_keyswitch_idx_for_rule(rule, ks)
@@ -525,9 +592,9 @@ function gui_append_keyswitch_to_selected_rule(ks)
         { Determine the currently selected keyswitch in the GUI for later. }
         idx := gui_get_selected_keyswitch()
         count := get_num_keyswitches_for_rule(rule)
-        if ks = -1
+        if ks = KEYSWITCH_UNDEFINED
             if count > 0
-                ks := rules[rule].keyswitches[idx] + 1
+                ks := rules[rule].keyswitch[idx].evcode + 1
             else
                 { No existing keyswitches, use first note. }
                 ks := 0
@@ -538,44 +605,56 @@ function gui_append_keyswitch_to_selected_rule(ks)
             name := get_keyswitch_name(ks)
             set_menu_item_str(get_ui_id(menu_keyswitches), count, name)
             set_menu_item_visibility(get_ui_id(menu_keyswitches), count, 1)
-            rules[rule].keyswitches[count] := ks
+            rules[rule].keyswitch[count].evcode := ks
             menu_keyswitches := count
 
             if count > 0
                 { Clone some config from the currently selected keyswitch }
+                rules[rule].keyswitch[count].config[RULE_KEYSWITCH_ACTION] := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_ACTION]
+                rules[rule].keyswitch[count].config[RULE_KEYSWITCH_SOURCE_CHANNEL] := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_SOURCE_CHANNEL]
+                rules[rule].keyswitch[count].config[RULE_KEYSWITCH_TARGET_CHANNEL] := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_TARGET_CHANNEL]
 
-                { If the currently selected keyswitch we're clone is a redirect, rather than
-                  cloning the redirect config directly, measure the distance between the new
-                  keyswitch and the currently selected keyswitch and adjust the redirection
-                  based on the distance. }
-                redirect := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_REDIRECT]
-                if redirect >= 0
-                    offset := ks - rules[rule].keyswitches[idx]
-                    redirect := redirect + offset
-                    if redirect < 0
-                        redirect := 0
+                // If the currently selected keyswitch we're cloning is a redirect and the Learn++
+                // button was pressed, rather than cloning the redirect config directly, measure the
+                // distance between the new keyswitch and the currently selected keyswitch and
+                // adjust the redirection based on the distance.
+                action := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_ACTION]
+                if action = KEYSWITCH_ACTION_REDIRECT
+                    if button_keyswitch_midi_learn_inc = 1
+                        offset := ks - rules[rule].keyswitch[idx].evcode
+                    else
+                        offset := 0
                     end if
+
+                    for i := 0 to MAX_REDIRECTS_PER_KEYSWITCH - 1
+                        evcode := rules[rule].keyswitch[idx].redirects[i].evcode
+                        if evcode # KEYSWITCH_UNDEFINED
+                            { Now configure the new keyswitch with the adjusted redirect and the
+                              source/target channels of the cloned keyswitch. }
+                            rules[rule].keyswitch[count].redirects[i].evcode := evcode + offset
+                            value := rules[rule].keyswitch[idx].redirects[i].velocity
+                            rules[rule].keyswitch[count].redirects[i].velocity := value
+                        else
+                            rules[rule].keyswitch[count].redirects[i].evcode := KEYSWITCH_UNDEFINED
+                        end if
+                    end for
                 end if
-                { Now configure the new keyswitch with the adjusted redirect and the
-                  source/target channels of the cloned keyswitch. }
-                rules[rule].keyswitch_config[count, RULE_KEYSWITCH_REDIRECT] := redirect
-                rules[rule].keyswitch_config[count, RULE_KEYSWITCH_SOURCE_CHANNEL] := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_SOURCE_CHANNEL]
-                rules[rule].keyswitch_config[count, RULE_KEYSWITCH_TARGET_CHANNEL] := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_TARGET_CHANNEL]
-                rules[rule].keyswitch_config[count, RULE_KEYSWITCH_REDIRECT_VELOCITY] := rules[rule].keyswitch_config[idx, RULE_KEYSWITCH_REDIRECT_VELOCITY]
             else
                 { Initialize new keyswitch (not cloned) to blocked, all source channels,
                   rule default target channel. }
-                rules[rule].keyswitch_config[count, RULE_KEYSWITCH_REDIRECT] := -1
-                rules[rule].keyswitch_config[count, RULE_KEYSWITCH_SOURCE_CHANNEL] := 0
-                rules[rule].keyswitch_config[count, RULE_KEYSWITCH_TARGET_CHANNEL] := 0
-                rules[rule].keyswitch_config[count, RULE_KEYSWITCH_REDIRECT_VELOCITY] := 127
+                rules[rule].keyswitch[count].config[RULE_KEYSWITCH_ACTION] := KEYSWITCH_ACTION_BLOCK
+                rules[rule].keyswitch[count].config[RULE_KEYSWITCH_SOURCE_CHANNEL] := 0
+                rules[rule].keyswitch[count].config[RULE_KEYSWITCH_TARGET_CHANNEL] := 0
+                for i := 0 to MAX_REDIRECTS_PER_KEYSWITCH - 1
+                    rules[rule].keyswitch[count].redirects[i].evcode := KEYSWITCH_UNDEFINED
+                end for
             end if
             call gui_update_for_selected_keyswitch
             message("Added keyswitch " & name & " to rule " & rules[rule].name & " at " & count)
         else
             message("ERROR: too many keyswitches for this rule, can't add.")
         end if
-        call build_ks_maps
+        need_maps_rebuild := 1
     else
         { Keyswitch already exists, so select it in UI instead }
         menu_keyswitches := idx
@@ -589,8 +668,8 @@ function gui_clear_keyswitches_for_selected_rule()
     rule := gui_get_selected_rule()
     menu_keyswitches := 0
     for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
-        rules[rule].keyswitches[i] := -1
-        rules[rule].keyswitch_config[i, RULE_KEYSWITCH_REDIRECT] := -1
+        rules[rule].keyswitch[i].evcode := KEYSWITCH_UNDEFINED
+        rules[rule].keyswitch[i].config[RULE_KEYSWITCH_ACTION] := KEYSWITCH_ACTION_BLOCK
         set_menu_item_str(get_ui_id(menu_keyswitches), i, "<empty>")
         if i > 0
             set_menu_item_visibility(get_ui_id(menu_keyswitches), i, 0)
@@ -605,7 +684,37 @@ end function
 function gui_set_selected_keyswitch_config(config, value)
     rule := gui_get_selected_rule()
     idx := gui_get_selected_keyswitch()
-    rules[rule].keyswitch_config[idx, config] := value
+    // If setting the keyswitch action to redirect, then ensure the first
+    // keyswitch redirect is initialized.
+    if config = RULE_KEYSWITCH_ACTION and value = KEYSWITCH_ACTION_REDIRECT
+        if rules[rule].keyswitch[idx].redirects[0]._raw = KEYSWITCH_UNDEFINED
+            rules[rule].keyswitch[idx].redirects[0].evcode := 0
+        end if
+    end if
+    rules[rule].keyswitch[idx].config[config] := value
+end function
+
+{ Sets a redirect for the currently selected keyswitch. }
+function gui_set_selected_keyswitch_config_redirect(n, ks, velocity)
+    rule := gui_get_selected_rule()
+    idx := gui_get_selected_keyswitch()
+    if ks >= 0
+        rules[rule].keyswitch[idx].redirects[n].evcode := ks
+    end if
+    if velocity >= 0
+        rules[rule].keyswitch[idx].redirects[n].velocity := velocity
+    end if
+end function
+
+{ Sets the given config parameter for the currently selected keyswitch. }
+function gui_set_selected_keyswitch_config_flags(flag, state)
+    rule := gui_get_selected_rule()
+    idx := gui_get_selected_keyswitch()
+    value := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_FLAGS] .and. .not. flag
+    if state # 0
+        value := value .or. flag
+    end if
+    rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_FLAGS] := value
 end function
 
 
@@ -638,38 +747,57 @@ function gui_set_selected_keyswitch_from_ui
     end if
     rule := gui_get_selected_rule()
     idx := gui_get_selected_keyswitch()
-    rules[rule].keyswitches[idx] := ks
+    rules[rule].keyswitch[idx].evcode := ks
     call gui_update_for_selected_keyswitch
 end function
 
 
+function clear_redirect_midi_learn_buttons
+    macro _clear_redirect_midi_learn_buttons(#n#)
+        button_rule_keyswitch_redirect_midi_learn#n# := 0
+    end macro
+    iterate_macro(_clear_redirect_midi_learn_buttons) := 0 to MAX_GUI_REDIRECTS_PER_KEYSWITCH - 1
+    keyswitch_redirect_midi_learn_index := -1
+    button_keyswitch_midi_find := 0
+    button_keyswitch_midi_learn_inc := 0
+    button_keyswitch_midi_learn := 0
+
+end function
 
 { Configures the redirect keyswitch for the currently selected keyswitch.  Triggered
   by keyswitch MIDI Learn. }
 function gui_set_selected_keyswitch_redirect(ks, value)
-    gui_set_selected_keyswitch_config(RULE_KEYSWITCH_REDIRECT, ks)
-    if ks < 128
-        gui_set_selected_keyswitch_config(RULE_KEYSWITCH_REDIRECT_VELOCITY, value)
-    end if
-    button_rule_keyswitch_redirect_midi_learn := 0
+    gui_set_selected_keyswitch_config_redirect(keyswitch_redirect_midi_learn_index, ks, value)
+    call clear_redirect_midi_learn_buttons
     call gui_update_for_selected_keyswitch
-    call build_ks_maps
+    need_maps_rebuild := 1
 end function
 
 
 { Configures the active keyswitch redirection parameters from the current UI settings }
 function gui_set_selected_keyswitch_redirect_from_ui
-    if menu_rule_keyswitch_redirect_type = 0
-        { Key}
-        ks := value_rule_keyswitch_redirect_key
-    else if menu_rule_keyswitch_redirect_type = 2
-        { Program }
-        ks := 128 + value_rule_keyswitch_redirect_program
-    else
-        { CC }
-        ks := 128*128 + value_rule_keyswitch_redirect_cc * 128 + value_rule_keyswitch_redirect_cc_value
-    end if
-    gui_set_selected_keyswitch_redirect(ks, value_rule_keyswitch_redirect_key_velocity)
+    rule := gui_get_selected_rule()
+    idx := gui_get_selected_keyswitch()
+    macro update_keyswitch_config_redirect(#n#)
+        if get_control_par(menu_rule_keyswitch_redirect_type[#n#], CONTROL_PAR_HIDE) = HIDE_WHOLE_CONTROL
+            // If the keyswitch type menu is hidden, then keyswitch is undefined.
+            ks := KEYSWITCH_UNDEFINED
+        else if menu_rule_keyswitch_redirect_type#n# = 0
+            { Key}
+            ks := value_rule_keyswitch_redirect_key#n#
+        else if menu_rule_keyswitch_redirect_type#n# = 1
+            { CC }
+            ks := 128*128 + value_rule_keyswitch_redirect_cc#n# * 128 + value_rule_keyswitch_redirect_cc_value#n#
+        else if menu_rule_keyswitch_redirect_type#n# = 2
+            { Program }
+            ks := 128 + value_rule_keyswitch_redirect_program#n#
+        else
+            ks := KEYSWITCH_UNDEFINED
+        end if
+        rules[rule].keyswitch[idx].redirects[#n#].evcode := ks
+        rules[rule].keyswitch[idx].redirects[#n#].velocity := value_rule_keyswitch_redirect_key_velocity#n#
+    end macro
+    iterate_macro(update_keyswitch_config_redirect) := 0 to MAX_GUI_REDIRECTS_PER_KEYSWITCH - 1
 end function
 
 
@@ -798,7 +926,7 @@ end on
 
 { Keyswitch New button clicked }
 on ui_control(button_keyswitch_new)
-    ks := -1
+    ks := KEYSWITCH_UNDEFINED
     gui_append_keyswitch_to_selected_rule(ks)
     button_keyswitch_new := 0
 end on
@@ -806,13 +934,24 @@ end on
 
 { Keyswitch MIDI Learn button clicked }
 on ui_control(button_keyswitch_midi_learn)
-    button_rule_keyswitch_redirect_midi_learn := 0
-    button_keyswitch_midi_find := 0
     if button_keyswitch_midi_learn = 0
-        call build_ks_maps
+        need_maps_rebuild := 1
+    else
+        call clear_redirect_midi_learn_buttons
+        button_keyswitch_midi_learn := 1
     end if
 end on
 
+
+{ Keyswitch MIDI Learn++ button clicked }
+on ui_control(button_keyswitch_midi_learn_inc)
+    if button_keyswitch_midi_learn_inc = 0
+        need_maps_rebuild := 1
+    else
+        call clear_redirect_midi_learn_buttons
+        button_keyswitch_midi_learn_inc := 1
+    end if
+end on
 
 { Keyswitch Remove button clicked }
 on ui_control(button_keyswitch_remove)
@@ -825,13 +964,13 @@ on ui_control(button_keyswitch_remove)
     end if
 
     while ks < MAX_KEYSWITCHES_PER_RULE
-        rules[rule].keyswitches[ks] := rules[rule].keyswitches[ks + 1]
-        rules[rule].keyswitches[ks + 1] := -1
+        rules[rule].keyswitch[ks].evcode := rules[rule].keyswitch[ks + 1].evcode
+        rules[rule].keyswitch[ks + 1].evcode := KEYSWITCH_UNDEFINED
         name := get_menu_item_str(get_ui_id(menu_keyswitches), ks + 1)
         set_menu_item_str(get_ui_id(menu_keyswitches), ks, name)
         for i := 0 to MAX_CONFIG_PER_KEYSWITCH
-            rules[rule].keyswitch_config[ks, i] := rules[rule].keyswitch_config[ks + 1, i]
-            rules[rule].keyswitch_config[ks + 1, i] := -1
+            rules[rule].keyswitch[ks].config[i] := rules[rule].keyswitch[ks + 1].config[i]
+            rules[rule].keyswitch[ks + 1].config[i] := -1
         end for
         ks := ks + 1
     end while
@@ -841,20 +980,23 @@ on ui_control(button_keyswitch_remove)
     set_menu_item_visibility(get_ui_id(menu_keyswitches), count - 1, 0)
     call gui_update_for_selected_keyswitch
     button_keyswitch_remove := 0
+    need_maps_rebuild := 1
 end on
 
 
 { Keyswitch Redirect MIDI Learn button clicked }
 on ui_control(button_keyswitch_midi_find)
-    button_keyswitch_midi_learn := 0
-    button_rule_keyswitch_redirect_midi_learn := 0
+    if button_keyswitch_midi_find = 1
+        call clear_redirect_midi_learn_buttons
+        button_keyswitch_midi_find := 1
+    end if
 end on
 
 
 { Keyswitch Clear button clicked }
 on ui_control(button_keyswitch_clear)
     call gui_clear_keyswitches_for_selected_rule
-    call build_ks_maps
+    need_maps_rebuild := 1
     button_keyswitch_clear := 0
 end on
 
@@ -872,7 +1014,7 @@ on ui_control(menu_rule_keyswitch_type)
     end if
     rule := gui_get_selected_rule()
     idx := gui_get_selected_keyswitch()
-    rules[rule].keyswitches[idx] := ks
+    rules[rule].keyswitch[idx].evcode := ks
     call gui_update_for_selected_keyswitch
     call gui_update_keyswitch_name
 end on
@@ -881,102 +1023,133 @@ end on
 { Keyswitch redirect to note value changed }
 on ui_control(value_rule_keyswitch_key)
     call gui_set_selected_keyswitch_from_ui
-    call build_ks_maps
     call gui_update_keyswitch_name
+    need_maps_rebuild :=1
 end on
 
 { Keyswitch redirect to CC number changed }
 on ui_control(value_rule_keyswitch_cc)
     call gui_set_selected_keyswitch_from_ui
-    call build_ks_maps
     call gui_update_keyswitch_name
+    need_maps_rebuild :=1
 end on
 
 
 { Keyswitch redirect to CC value }
 on ui_control(value_rule_keyswitch_cc_value)
     call gui_set_selected_keyswitch_from_ui
-    call build_ks_maps
     call gui_update_keyswitch_name
+    need_maps_rebuild :=1
 end on
 
 { Keyswitch redirect to CC value }
 on ui_control(value_rule_keyswitch_program)
     call gui_set_selected_keyswitch_from_ui
-    call build_ks_maps
     call gui_update_keyswitch_name
+    need_maps_rebuild :=1
 end on
 
 
 { Keyswitch action menu (block, passthrough, redirect) changed }
 on ui_control(menu_rule_keyswitch_action)
-    gui_set_selected_keyswitch_config(RULE_KEYSWITCH_REDIRECT, menu_rule_keyswitch_action)
+    gui_set_selected_keyswitch_config(RULE_KEYSWITCH_ACTION, menu_rule_keyswitch_action)
     call gui_update_for_selected_keyswitch
 end on
 
 
-{ Keyswitch redirect type menu (key or CC) changed }
-on ui_control(menu_rule_keyswitch_redirect_type)
-    if menu_rule_keyswitch_redirect_type = 0
-        redirect := 0   { C-2 }
-        gui_set_selected_keyswitch_config(RULE_KEYSWITCH_REDIRECT_VELOCITY, 127)
-    else if menu_rule_keyswitch_redirect_type = 2
-        redirect := 128 { Prog 0 }
-    else
-        redirect := 130*128 { CC-2 value 0 }
-    end if
-    gui_set_selected_keyswitch_config(RULE_KEYSWITCH_REDIRECT, redirect)
-    call gui_update_for_selected_keyswitch
-end on
+macro add_keyswitch_redirect_callbacks(#n#)
+
+    on ui_control(button_rule_keyswitch_addremove#n#)
+        rule := gui_get_selected_rule()
+        idx := gui_get_selected_keyswitch()
+        value := rules[rule].keyswitch[idx].redirects[#n#]._raw
+        if value = KEYSWITCH_UNDEFINED
+            // Duplicate previous keyswitch
+            rules[rule].keyswitch[idx].redirects[#n#]._raw := rules[rule].keyswitch[idx].redirects[#n# - 1]._raw
+        else
+            // Move up everything below this keyswitch redirect
+            for i := #n# to MAX_REDIRECTS_PER_KEYSWITCH - 2
+                rules[rule].keyswitch[idx].redirects[i]._raw := rules[rule].keyswitch[idx].redirects[i + 1]._raw
+                rules[rule].keyswitch[idx].redirects[i + 1]._raw := KEYSWITCH_UNDEFINED
+            end for
+        end if
+        call gui_update_for_selected_keyswitch
+        button_rule_keyswitch_addremove#n# := 0
+    end on
+
+    { Keyswitch redirect type menu (key or CC) changed }
+    on ui_control(menu_rule_keyswitch_redirect_type#n#)
+        velocity := -1
+        if menu_rule_keyswitch_redirect_type#n# = 0
+            evcode := 0   { C-2 }
+            velocity := 127
+        else if menu_rule_keyswitch_redirect_type#n# = 2
+            evcode := 128 { Prog 0 }
+        else
+            evcode := 130*128 { CC-2 value 0 }
+        end if
+        gui_set_selected_keyswitch_config_redirect(#n#, evcode, velocity)
+        call gui_update_for_selected_keyswitch
+    end on
+
+    { Keyswitch redirect to note value changed }
+    on ui_control(value_rule_keyswitch_redirect_key#n#)
+        call gui_set_selected_keyswitch_redirect_from_ui
+    end on
+
+    { Keyswitch redirect to note velocity value changed }
+    on ui_control(value_rule_keyswitch_redirect_key_velocity#n#)
+        gui_set_selected_keyswitch_config_redirect(#n#, -1, value_rule_keyswitch_redirect_key_velocity#n#)
+        call gui_set_selected_keyswitch_redirect_from_ui
+    end on
 
 
-{ Keyswitch redirect to note value changed }
-on ui_control(value_rule_keyswitch_redirect_key)
-    call gui_set_selected_keyswitch_redirect_from_ui
-end on
+    { Keyswitch redirect to CC number changed }
+    on ui_control(value_rule_keyswitch_redirect_cc#n#)
+        call gui_set_selected_keyswitch_redirect_from_ui
+    end on
 
 
-{ Keyswitch redirect to note velocity value changed }
-on ui_control(value_rule_keyswitch_redirect_key_velocity)
-    gui_set_selected_keyswitch_config(RULE_KEYSWITCH_REDIRECT_VELOCITY, value_rule_keyswitch_redirect_key_velocity)
-    call gui_set_selected_keyswitch_redirect_from_ui
-end on
+    { Keyswitch redirect to CC value }
+    on ui_control(value_rule_keyswitch_redirect_cc_value#n#)
+        call gui_set_selected_keyswitch_redirect_from_ui
+    end on
 
+    { Keyswitch redirect to CC value }
+    on ui_control(value_rule_keyswitch_redirect_program#n#)
+        call gui_set_selected_keyswitch_redirect_from_ui
+    end on
 
-{ Keyswitch redirect to CC number changed }
-on ui_control(value_rule_keyswitch_redirect_cc)
-    call gui_set_selected_keyswitch_redirect_from_ui
-end on
-
-
-{ Keyswitch redirect to CC value }
-on ui_control(value_rule_keyswitch_redirect_cc_value)
-    call gui_set_selected_keyswitch_redirect_from_ui
-end on
-
-{ Keyswitch redirect to CC value }
-on ui_control(value_rule_keyswitch_redirect_program)
-    call gui_set_selected_keyswitch_redirect_from_ui
-end on
-
-
-{ Keyswitch Redirect MIDI Learn button clicked }
-on ui_control(button_rule_keyswitch_redirect_midi_learn)
-    button_keyswitch_midi_learn := 0
-    button_keyswitch_midi_find := 0
-end on
+    { Keyswitch Redirect MIDI Learn button clicked }
+    on ui_control(button_rule_keyswitch_redirect_midi_learn#n#)
+        if keyswitch_redirect_midi_learn_index = #n#
+            button_rule_keyswitch_redirect_midi_learn#n# := 0
+            keyswitch_redirect_midi_learn_index := -1
+        else
+            call clear_redirect_midi_learn_buttons
+            button_rule_keyswitch_redirect_midi_learn#n# := 1
+            keyswitch_redirect_midi_learn_index := #n#
+        end if
+    end on
+end macro
+iterate_macro(add_keyswitch_redirect_callbacks) := 0 to MAX_GUI_REDIRECTS_PER_KEYSWITCH - 1
 
 
 { Keyswitch source channel value changed }
 on ui_control(menu_rule_keyswitch_source_channel)
     gui_set_selected_keyswitch_config(RULE_KEYSWITCH_SOURCE_CHANNEL, menu_rule_keyswitch_source_channel)
-    call build_ks_maps
+    need_maps_rebuild :=1
     call gui_clear_active_routes_for_all_channels
 end on
 
 { Keyswitch target channel value changed }
 on ui_control(menu_rule_keyswitch_target_channel)
     gui_set_selected_keyswitch_config(RULE_KEYSWITCH_TARGET_CHANNEL, menu_rule_keyswitch_target_channel)
-    call build_ks_maps
+    need_maps_rebuild :=1
     call gui_clear_active_routes_for_all_channels
+end on
+
+{ Keyswitch flags changed }
+on ui_control(switch_rule_keyswitch_flags_hold_notes)
+    gui_set_selected_keyswitch_config_flags(KEYSWITCH_FLAG_HOLD_NOTES, switch_rule_keyswitch_flags_hold_notes)
 end on
