@@ -26,32 +26,32 @@ on init
     declare const KEYSWITCH_UNDEFINED := 0xffff
 
     // These constants  apply to the rule config parameter.
-    //   e.g. rules[idx].config[RULE_DEFINED]
+    // e.g. rules[idx].config[RULE_DEFINED]
 
     // 1 if the rule is defined, 0 if not and is a free slot for new rules.
     declare const RULE_DEFINED := 0
     // 1 if the rule is enabled, 0 if bypassed.
     declare const RULE_ENABLED := 1
     // The MIDI channel that keyswitches will be received on for this rule.  Value is as is shown
-    //   in the GUI, so MIDI channel 1 is stored as 1.
+    // in the GUI, so MIDI channel 1 is stored as 1.
     declare const RULE_KEYSWITCH_CHANNEL := 2
 
     // The default target MIDI channel for the rule's keyswitches.  For keyswitches using the
-    //   default target, once activated, subsequent events received on the keyswitch's configured
-    //   source channel will be diverted to this target channel.  MIDI channel 1 is stored as 1.
+    // default target, once activated, subsequent events received on the keyswitch's configured
+    // source channel will be diverted to this target channel.  MIDI channel 1 is stored as 1.
     declare const RULE_TARGET_CHANNEL := 3
 
     // The default source MIDI channel for the rule's keyswitches.  For keyswitches using the
-    //   default source, once activated, only events coming on this channel will be routed to the
-    //   target channel. MIDI channel 1 is stored as 1.
+    // default source, once activated, only events coming on this channel will be routed to the
+    // target channel. MIDI channel 1 is stored as 1.
     declare const RULE_SOURCE_CHANNEL := 4
 
     // Defines the CC chasing behaviour when keyswitches are triggered under the rule.
-    //   0 = no chasing, 1 = chase all CCs, 2 = chase "common" (1, 2, 11, 64-69).
+    // 0 = no chasing, 1 = chase all CCs, 2 = chase "common" (1, 2, 11, 64-69).
     declare const RULE_CC_CHASING := 5
 
     // These constants apply to the keyswitch config parameter.
-    //   e.g. rules[idx].keyswitch_config[ksidx, RULE_KEYSWITCH_SOURCE_CHANNEL ]
+    // e.g. rules[idx].keyswitch_config[ksidx, RULE_KEYSWITCH_SOURCE_CHANNEL ]
 
      // 0: block, 1: passthrough, 2: redirect (in which case keyswitch_redirects defines targets)
     declare const RULE_KEYSWITCH_ACTION := 0
@@ -65,13 +65,13 @@ on init
 
 
     // When the keyswitch is activated, non-keyswitch MIDI events received on this channel will be
-    //   redirected to the target channel.   A value of 0 means to use the rule default source,
-    //   -1 means all channels (omni), otherwise refers to a specific channel starting at 1.
+    // redirected to the target channel.   A value of 0 means to use the rule default source,
+    // -1 means all channels (omni), otherwise refers to a specific channel starting at 1.
     declare const RULE_KEYSWITCH_SOURCE_CHANNEL := 2
 
     // Target channel for this keyswitch.  A value of 0 means to use the rule default target,
-    //   -1 means to blackhole (null) the events, otherwise indicates the specific target channel
-    //   starting at 1.
+    // -1 means to blackhole (null) the events, otherwise indicates the specific target channel
+    // starting at 1.
     declare const RULE_KEYSWITCH_TARGET_CHANNEL := 3
 
     // For note-based keyswitches, defines the velocity range the keyswitch applies to.
@@ -83,11 +83,11 @@ on init
 
     family rules
         // Rules arrays can have gaps caused by removing rules.  Use RULE_DEFINED config
-        //   to determine if the rule is set.
+        // to determine if the rule is set.
         declare !_name[MAX_RULES]
         declare _config[MAX_RULES * MAX_CONFIG_PER_RULE] := (0)
         // In contrast, for a given rule, the keyswitch arrays _don't_ have gaps.  They are
-        //   closed when keyswitches are removed.
+        // closed when keyswitches are removed.
         declare _keyswitches[MAX_RULES * MAX_KEYSWITCHES_PER_RULE] := (KEYSWITCH_UNDEFINED)
         declare _keyswitch_config[MAX_RULES * MAX_KEYSWITCHES_PER_RULE * MAX_CONFIG_PER_KEYSWITCH] := (-1)
         // Low 16 bits contains ks value, next 8 bits contains velocity.  High 8 bits is reserved.
@@ -194,9 +194,9 @@ on init
     end family
 
     // For a given CC, for each channel what is the current value.
-    //     - CC chasing: from ch 1 to 2, replay last values from 1 to 2.
-    //     - Sustain/breath hanging: from 1 to 2, when sustain up on 2, play against 1.
-    //         - per rule, broadcast these CCs on previously active targets
+    //   - CC chasing: from ch 1 to 2, replay last values from 1 to 2.
+    //   - Sustain/breath hanging: from 1 to 2, when sustain up on 2, play against 1.
+    //       - per rule, broadcast these CCs on previously active targets
 
     // Global configuration
     declare global_config[MAX_GLOBAL_CONFIG] := (-1)
@@ -204,18 +204,18 @@ on init
     // Internal state
 
     // The keyswitch maps allow efficient lookup for a keyswitch to determine if it is active
-    //   for a given source MIDI channel, and which rules the keyswitch applies to.  They are
-    //   regenerated whenever rules are changed (or on initialization).
+    // for a given source MIDI channel, and which rules the keyswitch applies to.  They are
+    // regenerated whenever rules are changed (or on initialization).
     //
-    //   The first 128 elements map to the 128 notes.  The next 128 elements are for Program Change
-    //   messages.  The next 126*128 elements are reserved for future use.
+    // The first 128 elements map to the 128 notes.  The next 128 elements are for Program Change
+    // messages.  The next 126*128 elements are reserved for future use.
     //
-    //   Starting at 128*128, indexes are calculated as cc * value.  So for example the Spitfire
-    //   UACC code for spiccato is CC32 value 41, which would map to index 128*128 + 32*128 + 41 = 20521.
-    //   The value at this index is a bitmap of source MIDI channels that the keyswitch should
-    //   be listening on.
+    // Starting at 128*128, indexes are calculated as cc * value.  So for example the Spitfire
+    // UACC code for spiccato is CC32 value 41, which would map to index 128*128 + 32*128 + 41 = 20521.
+    // The value at this index is a bitmap of source MIDI channels that the keyswitch should
+    // be listening on.
     //
-    //   In FlexRouter, values encoded this way are called "MIDI Event Codes" or "evcodes"
+    // In FlexRouter, values encoded this way are called "MIDI Event Codes" or "evcodes"
 
 
     declare ks_to_keyswitch_channels[128*128 + 128*128] := (0)
@@ -224,15 +224,15 @@ on init
     declare ks_to_rules[128*128 + 128*128] := (0)
 
     // A bitmap that tracks which channels MIDI events should be routed to.  Since KSP doesn't support
-    //   64-bit integers, this is actually a set of two 32-bit integers for each source channel, since we
-    //   allow addressing all 64 MIDI channels as targets.  The first bitmap corresponds to channels 0-31
-    //   (LSB is channel 0) and the second corresponds to channels 32-63 (LSB is channel 32).
+    // 64-bit integers, this is actually a set of two 32-bit integers for each source channel, since we
+    // allow addressing all 64 MIDI channels as targets.  The first bitmap corresponds to channels 0-31
+    // (LSB is channel 0) and the second corresponds to channels 32-63 (LSB is channel 32).
     declare active_routes_bitmap[NUM_SOURCE_CHANNELS * 2] := (0)
 
     // Tracks all target channels for all currently held notes.  This allows us to send note-off events
-    //   for active notes to the channels that received the note-on events, rather than the current
-    //   routing.  Prevents hanging notes while keyswitches are triggered during a note.  As with
-    //   active_routes_bitmap, we use two 32-bit bitmaps for the 64 channels.
+    // for active notes to the channels that received the note-on events, rather than the current
+    // routing.  Prevents hanging notes while keyswitches are triggered during a note.  As with
+    // active_routes_bitmap, we use two 32-bit bitmaps for the 64 channels.
     declare active_notes_routes_bitmap[NUM_SOURCE_CHANNELS * 128*2] := (0)
 
     // List of keyswitch notes that are being held.  End of list is -1.  Each entry
@@ -240,8 +240,8 @@ on init
     declare active_keyswitch_notes_list[MAX_RULES * MAX_KEYSWITCHES_PER_RULE * MAX_REDIRECTS_PER_KEYSWITCH] := (-1)
 
     // Tracks all target channels for all non-zero CCs.  This doesn't tell us the value, but tells us
-    //   if that target channel has see a non-zero value for this CC.  This is used to prevent hanging
-    //   for sustain and breath CCs.  Again, two 32-bit bitmaps for the 64 channels.
+    // if that target channel has see a non-zero value for this CC.  This is used to prevent hanging
+    // for sustain and breath CCs.  Again, two 32-bit bitmaps for the 64 channels.
     declare active_ccs_routes_bitmap[NUM_SOURCE_CHANNELS * 128*2] := (0)
 
     // Track last CC values (both globally and per source channel) for CC chasing.
@@ -252,8 +252,8 @@ on init
     declare blackholed_sources[NUM_SOURCE_CHANNELS] := (0)
 
     // A bitmap representing all source MIDI channels for keyswitches currently being pressed (because
-    //   multiple keyswitches can be held and activated at the same time).  Used to keep track of which
-    //   channels have already been reset via clear_active_routes_for_channel()
+    // multiple keyswitches can be held and activated at the same time).  Used to keep track of which
+    // channels have already been reset via clear_active_routes_for_channel()
     declare active_keyswitch_source_channels_bitmap := 0
 
 
@@ -414,12 +414,12 @@ function get_next_rule_idx() -> idx
 end function
 
 // Given the current rule configuration, builds the ks_to_keyswitch_channels and ks_to_rules
-//   maps.  These maps allow is to efficiently determine if an event is a keyswitch (which must be
-//   decided for each and every MIDI event so must be efficient), and to quickly converge on the rule
-//   configuration if an event is determined to be a keyswitch.
+// maps.  These maps allow is to efficiently determine if an event is a keyswitch (which must be
+// decided for each and every MIDI event so must be efficient), and to quickly converge on the rule
+// configuration if an event is determined to be a keyswitch.
 
-//   This function must be invoked whenever rule configuration is modified.  Since it is called
-//   from several places, this isn't an inlined function.
+// This function must be invoked whenever rule configuration is modified.  Since it is called
+// from several places, this isn't an inlined function.
 function build_ks_maps
     for i := 0 to num_elements(ks_to_keyswitch_channels) - 1
         ks_to_keyswitch_channels[i] := 0
@@ -449,20 +449,20 @@ end function
 
 
 // Configures routing so that all non-keyswitch events on the given source channel
-//   (offset from 0, i.e. MIDI channel 1 is value 0) are diverts to the given target
-//   channel (also offset from 0).
+// (offset from 0, i.e. MIDI channel 1 is value 0) are diverts to the given target
+// channel (also offset from 0).
 
-//   If the source channel is not found in active_keyswitch_source_channels_bitmap
-//   then all existing routes for the source are cleared and the channel is added
-//   to the bitmap.
+// If the source channel is not found in active_keyswitch_source_channels_bitmap
+// then all existing routes for the source are cleared and the channel is added
+// to the bitmap.
 
-//   This allows for multiple targets to be configured for a given source.  This
-//   function must be called for each source.
+// This allows for multiple targets to be configured for a given source.  This
+// function must be called for each source.
 function set_active_route_for_channel(rule, source, target)
     declare idx
     if active_keyswitch_source_channels_bitmap .and. sh_left(1, source) = 0
         // The routing for this source channel hasn't yet been cleared for this keyswitch event,
-        //   so clear it now before establishing a new route.
+        // so clear it now before establishing a new route.
         clear_active_routes_for_channel(source)
         active_keyswitch_source_channels_bitmap := active_keyswitch_source_channels_bitmap .or. sh_left(1, source)
     end if
@@ -477,7 +477,7 @@ end function
 
 
 // Determine if the user config requires the given CC should have zero-values routed
-//   to prior keyswitch targets, to prevent for example sustain pedal hanging.
+// to prior keyswitch targets, to prevent for example sustain pedal hanging.
 function should_prevent_cc_hang(cc) -> result
     config := global_config[GLOBAL_CONFIG_CC_HANGING]
     if config = 1
@@ -520,8 +520,8 @@ function _chase(rule, source, target, cc, value)
     declare idx
     declare offset
     // It was intuitive to avoid chasing if source == target, but intuition failed: that's still
-    //   necessary because the source could have been rerouted to a different target, so we
-    //   still need to chase CCs if we switch back.
+    // necessary because the source could have been rerouted to a different target, so we
+    // still need to chase CCs if we switch back.
 
     if value >= 0
         flag := should_chase_cc(rule, cc)
@@ -544,7 +544,7 @@ function blackhole_source(channel)
 end function
 
 // Clears all active routes for the given channel.  The routes would have been previously
-//   established by calling set_active_route_for_channel()
+// established by calling set_active_route_for_channel()
 function clear_active_routes_for_channel(channel)
     active_routes_bitmap[channel * 2 + 0] := 0
     active_routes_bitmap[channel * 2 + 1] := 0
@@ -562,7 +562,7 @@ end function
 
 
 // Returns the index (offset from 0) for the first instance of the given
-//   keyswitch if found, otherwise returns -1 if not found.
+// keyswitch if found, otherwise returns -1 if not found.
 function get_keyswitch_idx_for_rule(rule, ks) -> idx
     idx := -1
     j := 0
@@ -576,8 +576,8 @@ end function
 
 
 // Routes a MIDI event to one or more channels (up to 64 of them).  The target channels are
-//   determined from the given bitmap at the given index for channels 0-31, and the subsequent index
-//   for channels 32-63.
+// determined from the given bitmap at the given index for channels 0-31, and the subsequent index
+// for channels 32-63.
 function route_midi_event(bitmap, idx, command, byte1, byte2)
     if bitmap[idx] # 0
         _route_midi_event_int32(bitmap[idx], 0, command, byte1, byte2)
@@ -590,7 +590,7 @@ end function
 
 function _route_midi_event_int32(bitmap, channel_offset, command, byte1, byte2)
     // TODO: future optimization: could unroll this a bit, testing each byte in the integer and only
-    //   if nonzero would we iterate through each bit in that byte.
+    // if nonzero would we iterate through each bit in that byte.
     for i := 0 to 31
         if bitmap .and. sh_left(1, i) # 0
             set_midi(channel_offset + i, command, byte1, byte2)
@@ -755,15 +755,16 @@ on midi_in
             ignore_midi
 
             // Iterate through all applicable rules and apply target channel to active routes.
-            //   This isn't as cheap as it might be, although it's not terrible and it's only done
-            //   on a keyswitch event.
+            // This isn't as cheap as it might be, although it's not terrible and it's only done
+            // on a keyswitch event.
             for rule := 0 to MAX_GUI_RULES - 1
                 if ks_to_rules[ks] .and. sh_left(1, rule) # 0 and (rules[rule].config[RULE_KEYSWITCH_CHANNEL] = MIDI_CHANNEL + 1 ...
                     or rules[rule].config[RULE_KEYSWITCH_CHANNEL] = -1)
                     // This keyswitch event applies to the rule at index rule.  Now set up the
-                    //   routing for each matching keyswitch in the rule.
+                    // routing for each matching keyswitch in the rule.
+                    //
                     // TODO: use a sentinel to indicate the end of keyswitches to avoid
-                    //    needlessly iterating all of them.
+                    // needlessly iterating all of them.
                     for idx := 0 to MAX_KEYSWITCHES_PER_RULE - 1
                         if rules[rule].keyswitch[idx].evcode = ks
                             // For note-based keyswitches, only trigger if the velocity is in range.
@@ -799,9 +800,9 @@ on midi_in
         // Prevent note hanging.
         if is_note_off_event = 1
             // Check to see if the active channels for the given note is different from the active routes
-            //   for this MIDI channel.  If it is, then send the note off event to those channels.  It's
-            //   technically redundant to route the event to the active channels later, but it's not worth
-            //   avoiding the repeated note off for this uncommon case.
+            // for this MIDI channel.  If it is, then send the note off event to those channels.  It's
+            // technically redundant to route the event to the active channels later, but it's not worth
+            // avoiding the repeated note off for this uncommon case.
             if active_notes_routes_bitmap[idx] # active_routes_bitmap[offset] or ...
                active_notes_routes_bitmap[idx + 1] # active_routes_bitmap[offset + 1]
                 route_midi_event(active_notes_routes_bitmap, idx, MIDI_COMMAND, MIDI_BYTE_1, MIDI_BYTE_2)
@@ -840,7 +841,7 @@ on midi_in
         // Prevent hanging for certain CCs.
 
         // Now route the event to all active channels if there are active routes for this MIDI channel.
-        //   If there aren't any active routes, we don't interfere with the event.
+        // If there aren't any active routes, we don't interfere with the event.
         if active_routes_bitmap[offset] # 0 or active_routes_bitmap[offset + 1] # 0
             ignore_midi
             route_midi_event(active_routes_bitmap, offset, MIDI_COMMAND, MIDI_BYTE_1, MIDI_BYTE_2)

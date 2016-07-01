@@ -459,9 +459,7 @@ end function
 
 // Set visibility of all controls in the keyswitch section by context of the keyswitch configuration.
 function gui_set_keyswitch_section_visibility(rule, idx, ks, action)
-    // section control, ks note controls, ks cc controls, ks program controls,
-    //   section info label, general redirect controls, key redirect controls,
-    //   CC redirect controls, Prog redirect controls
+    // section control, ks note controls, ks cc controls, ks program controls, section info label
     declare params[9]
     macro reset_params()
         for j := 0 to 8
@@ -624,7 +622,7 @@ end function
 
 
 // Clears all active routes and informs user via a message.  Must be called when a UI
-//   element is changed that would invalidate the current routes.
+// element is changed that would invalidate the current routes.
 function gui_clear_active_routes_for_all_channels()
     for j := 0 to NUM_SOURCE_CHANNELS - 1
         clear_active_routes_for_channel(j)
@@ -838,7 +836,7 @@ function clear_redirect_midi_learn_buttons
 end function
 
 // Configures the redirect keyswitch for the currently selected keyswitch.  Triggered
-//   by keyswitch MIDI Learn.
+// by keyswitch MIDI Learn.
 function gui_set_selected_keyswitch_redirect(ks, value)
     gui_set_selected_keyswitch_config_redirect(keyswitch_redirect_midi_learn_index, ks, value)
     call clear_redirect_midi_learn_buttons
