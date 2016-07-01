@@ -74,6 +74,11 @@ on init
     //   starting at 1.
     declare const RULE_KEYSWITCH_TARGET_CHANNEL := 3
 
+    // For note-based keyswitches, defines the velocity range the keyswitch applies to.
+    // Encoded such that the low 8 bits are the min velocity, and the next byte is max velocity.
+    declare const RULE_KEYSWITCH_VELOCITY_RANGE := 4
+    declare const VELOCITY_RANGE_DEFAULT := 0x7f00 // 0-127
+
 
 
     family rules
@@ -118,6 +123,33 @@ on init
                     rules._keyswitches[rule * MAX_KEYSWITCHES_PER_RULE + ks] := value
                 end function
             end property
+
+            family velocity
+                property min
+                    function get(rule, ks) -> result
+                        result := rules[rule].keyswitch[ks].velocity._raw .and. 0xff
+                    end function
+                    function set(rule, ks, value)
+                        rules[rule].keyswitch[ks].velocity._raw := (rules[rule].keyswitch[ks].velocity._raw .and. 0xff00) + value
+                    end function
+                end property
+                property max
+                    function get(rule, ks) -> result
+                        result := sh_right(rules[rule].keyswitch[ks].velocity._raw, 8) .and. 0xff
+                    end function
+                    function set(rule, ks, value)
+                        rules[rule].keyswitch[ks].velocity._raw := (rules[rule].keyswitch[ks].velocity._raw .and. 0xff) + sh_left(value, 8)
+                    end function
+                end property
+                property _raw
+                    function get(rule, ks) -> result
+                        result := rules[rule].keyswitch[ks].config[RULE_KEYSWITCH_VELOCITY_RANGE]
+                    end function
+                    function set(rule, ks, value)
+                        rules[rule].keyswitch[ks].config[RULE_KEYSWITCH_VELOCITY_RANGE] := value
+                    end function
+                end property
+            end family
 
             property config
                 function get(rule, ks, param) -> result
@@ -203,7 +235,7 @@ on init
     //   active_routes_bitmap, we use two 32-bit bitmaps for the 64 channels.
     declare active_notes_routes_bitmap[NUM_SOURCE_CHANNELS * 128*2] := (0)
 
-    // List of keyswitch notes that are being held according to the .  End of list is -1.  Each entry
+    // List of keyswitch notes that are being held.  End of list is -1.  Each entry
     // indicates the note (low 8 bits) and target channel (next 8 bits).
     declare active_keyswitch_notes_list[MAX_RULES * MAX_KEYSWITCHES_PER_RULE * MAX_REDIRECTS_PER_KEYSWITCH] := (-1)
 
@@ -241,6 +273,7 @@ on init
     declare target
     declare rule
     declare flag
+    declare triggered
     declare action
     declare value
     declare evcode
@@ -299,6 +332,7 @@ function migrate_config
                 evcode := rules[rule].keyswitch[ks].config[0]
                 velocity := rules[rule].keyswitch[ks].config[1]
                 rules[rule].keyswitch[ks].config[RULE_KEYSWITCH_FLAGS] := 0
+                rules[rule].keyswitch[ks].velocity._raw := VELOCITY_RANGE_DEFAULT
                 // Initialize redirects
                 for i := 0 to MAX_REDIRECTS_PER_KEYSWITCH - 1
                     rules[rule].keyswitch[ks].redirects[i]._raw := KEYSWITCH_UNDEFINED
@@ -332,6 +366,7 @@ function initialize_rule(idx, name)
     rules[idx].config[RULE_CC_CHASING] := 2
     for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
         rules[idx].keyswitch[i].evcode := KEYSWITCH_UNDEFINED
+        rules[idx].keyswitch[i].velocity._raw := VELOCITY_RANGE_DEFAULT
         rules[idx].keyswitch[i].config[RULE_KEYSWITCH_ACTION] := KEYSWITCH_ACTION_BLOCK
         rules[idx].keyswitch[i].config[RULE_KEYSWITCH_FLAGS] := 0
         rules[idx].keyswitch[i].config[RULE_KEYSWITCH_SOURCE_CHANNEL] := 0
@@ -353,13 +388,13 @@ function copy_rule(src, dst)
     rules[dst].config[RULE_CC_CHASING] := rules[src].config[RULE_CC_CHASING]
     for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
         rules[dst].keyswitch[i].evcode := rules[src].keyswitch[i].evcode
+        rules[dst].keyswitch[i].velocity._raw := rules[src].keyswitch[i].velocity._raw
         rules[dst].keyswitch[i].config[RULE_KEYSWITCH_FLAGS] := rules[src].keyswitch[i].config[RULE_KEYSWITCH_FLAGS]
         rules[dst].keyswitch[i].config[RULE_KEYSWITCH_ACTION] := rules[src].keyswitch[i].config[RULE_KEYSWITCH_ACTION]
         rules[dst].keyswitch[i].config[RULE_KEYSWITCH_SOURCE_CHANNEL] := rules[src].keyswitch[i].config[RULE_KEYSWITCH_SOURCE_CHANNEL]
         rules[dst].keyswitch[i].config[RULE_KEYSWITCH_TARGET_CHANNEL] := rules[src].keyswitch[i].config[RULE_KEYSWITCH_TARGET_CHANNEL]
 
         // Copy keyswitch redirects
-        declare value
         for j := 0 to MAX_REDIRECTS_PER_KEYSWITCH - 1
             evcode := rules[src].keyswitch[i].redirects[j].evcode
             velocity := rules[src].keyswitch[i].redirects[j].velocity
@@ -713,7 +748,10 @@ on midi_in
             end if
 
             // Block the keyswitch event from propagating.  If applicable, we will route the
-            //   event to the appropriate targets based on rule configuration.
+            // event to the appropriate targets based on rule configuration, or regenerate it
+            // in the case that this is a note-based keyswitch that didn't match the configured
+            // velocity range.
+            triggered := 0
             ignore_midi
 
             // Iterate through all applicable rules and apply target channel to active routes.
@@ -728,11 +766,21 @@ on midi_in
                     //    needlessly iterating all of them.
                     for idx := 0 to MAX_KEYSWITCHES_PER_RULE - 1
                         if rules[rule].keyswitch[idx].evcode = ks
-                            trigger_keyswitch_for_rule(rule, ks, idx)
+                            // For note-based keyswitches, only trigger if the velocity is in range.
+                            if ks > 128 or (MIDI_BYTE_2 >= rules[rule].keyswitch[idx].velocity.min and ...
+                               MIDI_BYTE_2 <= rules[rule].keyswitch[idx].velocity.max)
+                                trigger_keyswitch_for_rule(rule, ks, idx)
+                                triggered := 1
+                            end if
                         end if
                     end for
                 end if
             end for
+
+            if triggered = 0
+                // Regenerate the original MIDI event because the velocity was out of range.
+                set_midi(target, MIDI_COMMAND, MIDI_BYTE_1, MIDI_BYTE_2)
+            end if
             // Track number of currently held keyswitches (for layering)
             if is_note_on_event = 1
                 inc(num_ks_down)
