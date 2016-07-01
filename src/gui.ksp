@@ -40,9 +40,11 @@ macro gui_initialize
     declare ui_label label_keyswitches (1,1)
     declare ui_menu menu_keyswitches
     declare ui_button button_keyswitch_new
-    declare ui_button button_keyswitch_remove
+    declare ui_switch button_keyswitch_midi_learn
+    declare ui_switch button_keyswitch_midi_learn_inc
     declare ui_switch button_keyswitch_midi_find
     declare ui_button button_keyswitch_clone
+    declare ui_button button_keyswitch_remove
     declare ui_button button_keyswitch_clear
 
 
