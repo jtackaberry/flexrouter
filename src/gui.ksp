@@ -112,28 +112,34 @@ macro gui_initialize
     set_ui_height_px(290 + 20 * MAX_GUI_REDIRECTS_PER_KEYSWITCH)
 
     init_label(label_global_config, "Global Config ", 70, y, 75)
+    help(menu_global_cc_hanging, "Ensures that, for the specified CCs, zero-values are sent to all channels that had previously received events for these CCs.")
     move_and_set_width(menu_global_cc_hanging, 150, y, 150)
     add_menu_item(menu_global_cc_hanging, "Allow CC Hanging", 0)
     add_menu_item(menu_global_cc_hanging, "Prevent hanging for all CCs", 1)
     add_menu_item(menu_global_cc_hanging, "Prevent hanging for CC2/64", 2)
     y := y + 30
 
+    help(menu_rules, "The list of user defined rules. Up to 16 are allowed.")
     move_and_set_width(menu_rules, 70, y, 210)
     for i := 0 to MAX_GUI_RULES - 1
         add_menu_item(menu_rules, rules[i].name, i)
         set_menu_item_visibility(get_ui_id(menu_rules), i, rules[i].config[RULE_DEFINED])
     end for
 
+    help(button_add, "Add a new rule, with all fields initialized to default values.")
     set_text(button_add, "Add Rule")
     move_and_set_width(button_add, 290, y, 50)
 
+    help(button_remove, "Remove the current rule. If there's only one rule, then it's reinitialized to default values.")
     set_text(button_remove, "Remove Rule")
     move_and_set_width(button_remove, 350, y, 70)
 
+    help(button_rule_bypass, "Disable all keyswitches associated with this rule.")
     set_text(button_rule_bypass, "Bypass Rule")
     move_and_set_width(button_rule_bypass, 430, y, 65)
     center(button_rule_bypass)
 
+    help(button_rule_clone, "Creates a new rule, copying all settings and keyswitches from this rule.")
     set_text(button_rule_clone, "Clone Rule")
     move_and_set_width(button_rule_clone, 505, y, 65)
     center(button_rule_clone)
@@ -143,27 +149,32 @@ macro gui_initialize
 
     y := y + 30
     init_label(label_rule_name, "Rule Name", 95, y, 95)
+    help(text_rule_name, "An aribitrary name for this rule. Be descriptive!")
     move_and_set_width(text_rule_name, 200, y, 190)
 
     y := y + 20
+    help(menu_rule_keyswitch_channel, "The channel on which all keyswitch events will be received. Omni means keyswitches will work on any channel.")
     init_label(label_rule_keyswitch_channel, "Keyswitch Channel", 95, y, 95)
     add_menu_item(menu_rule_keyswitch_channel, "Omni", -1)
     move_and_set_width(menu_rule_keyswitch_channel, 200, y, 60)
     init_channel_menu(menu_rule_keyswitch_channel, 16)
 
     y := y + 20
+    help(menu_rule_source_channel, "Once a keyswitch is triggered and routes established, this is the default channel for the rule on which all MIDI events will be routed to the target channel(s). Individual keyswitches can override this.")
     init_label(label_rule_source_channel, "Default Source", 95, y, 95)
     move_and_set_width(menu_rule_source_channel, 200, y, 60)
     add_menu_item(menu_rule_source_channel, "Omni", -1)
     init_channel_menu(menu_rule_source_channel, 16)
 
     y := y + 20
+    help(menu_rule_target_channel, "Once a keyswitch is triggered, this is the default channel for the rule to which all subsequent non-keyswitch events will be routed. Individual keyswitches can override this.")
     init_label(label_rule_target_channel, "Default Target", 95, y, 95)
     move_and_set_width(menu_rule_target_channel, 200, y, 60)
     add_menu_item(menu_rule_target_channel, "Null", -1)
     init_channel_menu(menu_rule_target_channel, 64)
 
     y := y + 20
+    help(menu_rule_cc_chasing, "When activing keyswitches, replays the state of the given CCs to the new target channel(s). This can ensure a smooth transition between patches.")
     init_label(label_rule_cc_chasing, "CC Chasing", 95, y, 95)
     move_and_set_width(menu_rule_cc_chasing, 200, y, 125)
     add_menu_item(menu_rule_cc_chasing, "No chasing", 0)
@@ -174,23 +185,29 @@ macro gui_initialize
     y := y + 30
     init_label(label_keyswitches, "Keyswitches", 100, y, 90)
 
+    help(menu_keyswitches, "The list of configured keyswitches for the current rule. Up to 127 keyswitches are allowed per rule.")
     move_and_set_width(menu_keyswitches, 200, y, 80)
     for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
         add_menu_item(menu_keyswitches, "", i)
     end for
 
+    help(button_keyswitch_new, "Create a new keyswitch, whose configuration is initialized to hopefully something intelligent based on context.")
     set_text(button_keyswitch_new, "New")
     move_and_set_width(button_keyswitch_new, 290, y, 35)
 
+    help(button_keyswitch_midi_learn, "MIDI learn a keyswitch (note, CC, or program change).  Duplicates are prevented -- if you want duplicates, you need to manually configure them with the New button.")
     set_text(button_keyswitch_midi_learn, "Learn")
     move_and_set_width(button_keyswitch_midi_learn, 330, y, 40)
 
+    help(button_keyswitch_midi_learn_inc, "Same as the Learn button, except the keyswitch config is initialized to values based on the relative distance between the current and newly learned keyswitches.")
     set_text(button_keyswitch_midi_learn_inc, "Learn++")
     move_and_set_width(button_keyswitch_midi_learn_inc, 375, y, 50)
 
+    help(button_keyswitch_midi_find, "Find a keyswitch based on MIDI input. Don't forget to toggle this off when you're done searching!")
     set_text(button_keyswitch_midi_find, "MIDI Find")
     move_and_set_width(button_keyswitch_midi_find, 430, y, 55)
 
+    help(button_keyswitch_remove, "Removes the currently selected keyswitch from the rule.")
     set_text(button_keyswitch_remove, "Remove")
     move_and_set_width(button_keyswitch_remove, 515, y, 50)
 
@@ -204,24 +221,30 @@ macro gui_initialize
     y := y + 20
     init_label(label_rule_keyswitch, "Keyswitch", 135, y, 55)
 
+    help(menu_rule_keyswitch_type, "Defines the type of keyswitch: either a note, a CC event, or Program Change.")
     move_and_set_width(menu_rule_keyswitch_type, 200, y, 40)
     add_menu_item(menu_rule_keyswitch_type, "Key", 0)
     add_menu_item(menu_rule_keyswitch_type, "CC", 1)
     add_menu_item(menu_rule_keyswitch_type, "Prog", 2)
 
+    help(value_rule_keyswitch_key, "Receiving this note on the rule's keyswitch channel will trigger the keyswitch.")
     move_and_set_width(value_rule_keyswitch_key, 245, y, 40)
     set_text(value_rule_keyswitch_key, "")
 
+    help(value_rule_keyswitch_cc, "The CC number that must be received on the rule's keyswitch channel to trigger the keyswitch.")
     move_and_set_width(value_rule_keyswitch_cc, 245, y, 35)
     set_text(value_rule_keyswitch_cc, "")
     init_label(label_rule_keyswitch_cc_slash, "/", 285, y, 15)
+    help(value_rule_keyswitch_cc_value, "The specific CC value that must be matched to trigger the keyswitch.")
     move_and_set_width(value_rule_keyswitch_cc_value, 300, y, 35)
     set_text(value_rule_keyswitch_cc_value, "")
 
+    help(value_rule_keyswitch_program, "The program change number that will trigger the keyswitch when received on the rule's keyswitch channel.")
     move_and_set_width(value_rule_keyswitch_program, 245, y, 35)
     set_text(value_rule_keyswitch_program, "")
 
     y := y + 20
+    help(menu_rule_keyswitch_source_channel, "Override the rule-default source channel. When this keyswitch is engaged, MIDI events on this channel will be routed to the target channel. Default means use the rule default above.")
     init_label(label_rule_keyswitch_source_channel, "Source", 135, y, 55)
     move_and_set_width(menu_rule_keyswitch_source_channel, 200, y, 60)
     add_menu_item(menu_rule_keyswitch_source_channel, "Default", 0)
@@ -229,6 +252,7 @@ macro gui_initialize
     init_channel_menu(menu_rule_keyswitch_source_channel, 16)
 
     y := y + 20
+    help(menu_rule_keyswitch_target_channel, "Override the rule-default target channel. When this keyswitch is engaged, MIDI events will be routed to this channel.  Null is a special case which blackholes all incoming MIDI events on the source channel when this keyswitch is active.")
     init_label(label_rule_keyswitch_target_channel, "Target", 135, y, 55)
     move_and_set_width(menu_rule_keyswitch_target_channel, 200, y, 60)
     add_menu_item(menu_rule_keyswitch_target_channel, "Default", 0)
@@ -237,12 +261,14 @@ macro gui_initialize
 
     y := y + 20
     init_label(label_rule_keyswitch_flags, "Flags", 135, y, 55)
+    help(switch_rule_keyswitch_flags_hold_notes, "When enabled, note redirections (see keyswitch action) will be held until the next keyswitch activation. Useful for patches that engage functionality only while a particular note is pressed.")
     set_text(switch_rule_keyswitch_flags_hold_notes, "Hold redirected notes until next keyswitch")
     move_and_set_width(switch_rule_keyswitch_flags_hold_notes, 200, y, 200)
 
     y := y + 20
     init_label(label_rule_keyswitch_action, "KS Action", 135, y, 55)
 
+    help(menu_rule_keyswitch_action, "Defines the action to take when the keyswitch is triggered. Block prevents the keyswitch from reaching the target channel. Passthrough will route the keyswitch as-is to the target. Redirect allows user-customizable translation to the target.")
     move_and_set_width(menu_rule_keyswitch_action, 200, y, 80)
     add_menu_item(menu_rule_keyswitch_action, "Block", KEYSWITCH_ACTION_BLOCK)
     add_menu_item(menu_rule_keyswitch_action, "Passthrough", KEYSWITCH_ACTION_PASSTHROUGH)
@@ -261,38 +287,44 @@ macro gui_initialize
 end macro
 
 macro configure_keyswitch_redirect_controls(#n#)
-
     if #n# > 0
+        help(button_rule_keyswitch_addremove#n#, "Add or remove a redirection target")
         set_button_properties(button_rule_keyswitch_addremove[#n#], "+")
         set_control_par(button_rule_keyswitch_addremove[#n#], CONTROL_PAR_TEXT_ALIGNMENT, 1)
         set_bounds(button_rule_keyswitch_addremove[#n#], 285, y, 25)
     end if
-    set_bounds(menu_rule_keyswitch_redirect_type[#n#], 315, y, 40)
 
-    // move_and_set_width(menu_rule_keyswitch_redirect_type, 315, y, 40)
+    help(menu_rule_keyswitch_redirect_type#n#, "Defines the type of MIDI event the keyswitch will be redirected to. Either a note, CC event, or program change.")
+    set_bounds(menu_rule_keyswitch_redirect_type[#n#], 315, y, 40)
     add_menu_item(menu_rule_keyswitch_redirect_type#n#, "Key", 0)
     add_menu_item(menu_rule_keyswitch_redirect_type#n#, "CC", 1)
     add_menu_item(menu_rule_keyswitch_redirect_type#n#, "Prog", 2)
 
+    help(value_rule_keyswitch_redirect_key#n#, "The note the keyswitch will send to the target channel.")
     move_and_set_width(value_rule_keyswitch_redirect_key#n#, 360, y, 40)
     set_text(value_rule_keyswitch_redirect_key#n#, "")
+
+    help(value_rule_keyswitch_redirect_key_velocity#n#, "The velocity of the note.")
     init_label(label_rule_keyswitch_redirect_key_velocity#n#, "Velocity", 400, y, 45)
     center(label_rule_keyswitch_redirect_key_velocity#n#)
-
     move_and_set_width(value_rule_keyswitch_redirect_key_velocity#n#, 445, y, 35)
     set_text(value_rule_keyswitch_redirect_key_velocity#n#, "")
 
+    help(value_rule_keyswitch_redirect_cc#n#, "The CC number of the redirected MIDI event.")
     move_and_set_width(value_rule_keyswitch_redirect_cc#n#, 360, y, 35)
 
     set_text(value_rule_keyswitch_redirect_cc#n#, "")
     init_label(label_rule_keyswitch_redirect_cc_slash#n#, "/", 395, y, 15)
 
+    help(value_rule_keyswitch_redirect_cc_value#n#, "The CC value of the redirected MIDI event.")
     move_and_set_width(value_rule_keyswitch_redirect_cc_value#n#, 410, y, 35)
     set_text(value_rule_keyswitch_redirect_cc_value#n#, "")
 
+    help(value_rule_keyswitch_redirect_program#n#, "The program change number to send to the target channel.")
     move_and_set_width(value_rule_keyswitch_redirect_program#n#, 360, y, 35)
     set_text(value_rule_keyswitch_redirect_program#n#, "")
 
+    help(button_rule_keyswitch_redirect_midi_learn#n#, "MIDI learn a redirection event.")
     set_text(button_rule_keyswitch_redirect_midi_learn#n#, "MIDI Learn")
     move_and_set_width(button_rule_keyswitch_redirect_midi_learn#n#, 485, y, 60)
 
@@ -343,7 +375,13 @@ macro center(control)
     set_control_par(get_ui_id(control), CONTROL_PAR_TEXT_ALIGNMENT, 1)
 end macro
 
+function help(control, text)
+    helpid(get_ui_id(control), text)
+end function
 
+macro helpid(control, text)
+    set_control_par_str(control, CONTROL_PAR_HELP, text)
+end macro
 
 // GUI FUNCTIONS
 
@@ -532,7 +570,6 @@ function gui_update_for_selected_keyswitch()
 
     menu_rule_keyswitch_action := action
 
-    // message("action: " & action)
     if action = KEYSWITCH_ACTION_REDIRECT
         macro update_keyswitch_redirect(#n#)
             evcode := rules[rule].keyswitch[idx].redirects[#n#].evcode
@@ -628,7 +665,7 @@ function gui_append_keyswitch_to_selected_rule(ks)
                         evcode := rules[rule].keyswitch[idx].redirects[i].evcode
                         if evcode # KEYSWITCH_UNDEFINED
                             // Now configure the new keyswitch with the adjusted redirect and the
-                            //   source/target channels of the cloned keyswitch.
+                            // source/target channels of the cloned keyswitch.
                             rules[rule].keyswitch[count].redirects[i].evcode := evcode + offset
                             value := rules[rule].keyswitch[idx].redirects[i].velocity
                             rules[rule].keyswitch[count].redirects[i].velocity := value
@@ -639,7 +676,7 @@ function gui_append_keyswitch_to_selected_rule(ks)
                 end if
             else
                 // Initialize new keyswitch (not cloned) to blocked, all source channels,
-                //   rule default target channel.
+                // rule default target channel.
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_ACTION] := KEYSWITCH_ACTION_BLOCK
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_SOURCE_CHANNEL] := 0
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_TARGET_CHANNEL] := 0
