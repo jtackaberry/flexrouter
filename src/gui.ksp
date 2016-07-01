@@ -966,7 +966,7 @@ on ui_control(button_keyswitch_remove)
         rules[rule].keyswitch[ks + 1].evcode := KEYSWITCH_UNDEFINED
         name := get_menu_item_str(get_ui_id(menu_keyswitches), ks + 1)
         set_menu_item_str(get_ui_id(menu_keyswitches), ks, name)
-        for i := 0 to MAX_CONFIG_PER_KEYSWITCH
+        for i := 0 to MAX_CONFIG_PER_KEYSWITCH - 1
             rules[rule].keyswitch[ks].config[i] := rules[rule].keyswitch[ks + 1].config[i]
             rules[rule].keyswitch[ks + 1].config[i] := -1
         end for
