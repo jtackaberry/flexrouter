@@ -416,18 +416,18 @@ function gui_update_for_selected_rule()
 
     button_rule_bypass := 1 - rules[rule].config[RULE_ENABLED]
     menu_keyswitches := 0
-       for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
-           ks := rules[rule].keyswitch[i].evcode
-           if ks # KEYSWITCH_UNDEFINED
-               name := get_keyswitch_name(ks)
-               set_menu_item_str(get_ui_id(menu_keyswitches), i, name)
-               set_menu_item_visibility(get_ui_id(menu_keyswitches), i, 1)
-           else
-               set_menu_item_str(get_ui_id(menu_keyswitches), i, "<empty>")
+    for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
+        ks := rules[rule].keyswitch[i].evcode
+        if ks # KEYSWITCH_UNDEFINED
+            name := get_keyswitch_name(ks)
+            set_menu_item_str(get_ui_id(menu_keyswitches), i, name)
+            set_menu_item_visibility(get_ui_id(menu_keyswitches), i, 1)
+        else
+            set_menu_item_str(get_ui_id(menu_keyswitches), i, "<empty>")
             if i > 0
                 set_menu_item_visibility(get_ui_id(menu_keyswitches), i, 0)
             end if
-           end if
+       end if
     end for
     gui_update_for_selected_keyswitch()
 end function
