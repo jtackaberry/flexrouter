@@ -1,4 +1,4 @@
-{ Called during script initialization }
+// Called during script initialization
 macro utils_initialize
     declare !notes[12]
     declare !note_names[128]
@@ -59,10 +59,10 @@ function get_midi_channel_name(channel) -> name
 end function
 
 
-{ Oh KSP, how do I love thee. Let me count the ways.
+// Oh KSP, how do I love thee. Let me count the ways.
 
-  KSP can't persist string arrays, and so the mind blowing absurdity you see
-  below is actually necessary. }
+//   KSP can't persist string arrays, and so the mind blowing absurdity you see
+//   below is actually necessary.
 macro declare_strings_16(#prefix#)
     declare @#prefix#00
     declare @#prefix#01
