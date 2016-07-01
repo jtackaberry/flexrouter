@@ -997,6 +997,10 @@ on ui_control(button_keyswitch_remove)
             rules[rule].keyswitch[ks].config[i] := rules[rule].keyswitch[ks + 1].config[i]
             rules[rule].keyswitch[ks + 1].config[i] := -1
         end for
+        for i := 0 to MAX_REDIRECTS_PER_KEYSWITCH - 1
+            rules[rule].keyswitch[ks].redirects[i]._raw := rules[rule].keyswitch[ks + 1].redirects[i]._raw
+            rules[rule].keyswitch[ks + 1].redirects[i]._raw := KEYSWITCH_UNDEFINED
+        end for
         ks := ks + 1
     end while
 
