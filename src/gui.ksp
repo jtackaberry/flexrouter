@@ -42,6 +42,7 @@ macro gui_initialize
     declare ui_button button_keyswitch_new
     declare ui_button button_keyswitch_remove
     declare ui_switch button_keyswitch_midi_find
+    declare ui_button button_keyswitch_clone
     declare ui_button button_keyswitch_clear
 
 
@@ -139,7 +140,7 @@ macro gui_initialize
     move_and_set_width(button_rule_bypass, 430, y, 65)
     center(button_rule_bypass)
 
-    help(button_rule_clone, "Creates a new rule, copying all settings and keyswitches from this rule.")
+    button_rule_clone -> help := "Creates a new rule, copying all settings and keyswitches from this rule."
     set_text(button_rule_clone, "Clone Rule")
     move_and_set_width(button_rule_clone, 505, y, 65)
     center(button_rule_clone)
@@ -207,9 +208,13 @@ macro gui_initialize
     set_text(button_keyswitch_midi_find, "MIDI Find")
     move_and_set_width(button_keyswitch_midi_find, 430, y, 55)
 
+    button_keyswitch_clone -> help := "Create a new keyswitch with identical configuration."
+    set_text(button_keyswitch_clone, "Clone")
+    move_and_set_width(button_keyswitch_clone, 490, y, 35)
+
     button_keyswitch_remove -> help := "Remove the currently selected keyswitch from the rule."
     set_text(button_keyswitch_remove, "Remove")
-    move_and_set_width(button_keyswitch_remove, 515, y, 50)
+    move_and_set_width(button_keyswitch_remove, 530, y, 45)
 
     // Remove Clear button for now.  Debating if this is worth having.
     hide(button_keyswitch_clear)
@@ -601,13 +606,16 @@ end function
 
 
 // Adds the given keyswitch number to the currently selected rule.  Triggered by MIDI learn and the
-// New button.
-function gui_append_keyswitch_to_selected_rule(ks)
+// New and Clone buttons. This function undertsands the UI context (which button was pressed)
+// and acts accordingly.
+
+// Caller must set ks variable to the request keyswitch evcode.
+function gui_append_keyswitch_to_selected_rule
     rule := gui_get_selected_rule()
 
     if ks # KEYSWITCH_UNDEFINED
         // Do not allow MIDI Learn to create duplicates of a keyswitch. (Though
-        //   that can be done manually.)
+        // that can be done manually.)
         idx := get_keyswitch_idx_for_rule(rule, ks)
     else
         idx := -1
@@ -619,7 +627,12 @@ function gui_append_keyswitch_to_selected_rule(ks)
         count := get_num_keyswitches_for_rule(rule)
         if ks = KEYSWITCH_UNDEFINED
             if count > 0
-                ks := rules[rule].keyswitch[idx].evcode + 1
+                if button_keyswitch_clone = 1
+                    ks := rules[rule].keyswitch[idx].evcode
+                else
+                    ks := rules[rule].keyswitch[idx].evcode + 1
+                end if
+
             else
                 // No existing keyswitches, use first note.
                 ks := 0
@@ -675,7 +688,7 @@ function gui_append_keyswitch_to_selected_rule(ks)
                 end for
             end if
             call gui_update_for_selected_keyswitch
-            message("Added keyswitch " & name & " to rule " & rules[rule].name & " at " & count)
+            message("Added keyswitch " & name & " to rule " & rules[rule].name & " at index " & count)
         else
             message("ERROR: too many keyswitches for this rule, can't add.")
         end if
@@ -952,7 +965,7 @@ end on
 // Keyswitch New button clicked
 on ui_control(button_keyswitch_new)
     ks := KEYSWITCH_UNDEFINED
-    gui_append_keyswitch_to_selected_rule(ks)
+    call gui_append_keyswitch_to_selected_rule
     button_keyswitch_new := 0
 end on
 
@@ -1021,6 +1034,11 @@ on ui_control(button_keyswitch_midi_find)
     end if
 end on
 
+on ui_control(button_keyswitch_clone)
+    ks := KEYSWITCH_UNDEFINED
+    call gui_append_keyswitch_to_selected_rule
+    button_keyswitch_clone := 0
+end on
 
 // Keyswitch Clear button clicked
 on ui_control(button_keyswitch_clear)

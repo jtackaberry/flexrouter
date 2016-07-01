@@ -690,7 +690,7 @@ on midi_in
         // Keyswitch learn for rule (MIDI Learn button)
         ignore_midi
         if is_note_on_event = 1 or MIDI_COMMAND = MIDI_COMMAND_CC or MIDI_COMMAND = MIDI_COMMAND_PROGRAM_CHANGE
-            gui_append_keyswitch_to_selected_rule(ks)
+            call gui_append_keyswitch_to_selected_rule
         end if
     else if ks # KEYSWITCH_UNDEFINED and button_keyswitch_midi_find = 1
         // Keyswitch select (MIDI Find button) for rule
