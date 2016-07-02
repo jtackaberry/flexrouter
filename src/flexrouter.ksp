@@ -114,7 +114,7 @@ on init
 
 
         family keyswitch
-            // An "evcode" is a custom 32-bit encoding of a MIDI event.  See below for description.
+            // An "evcode" is a custom 16-bit encoding of a MIDI event.  See below for description.
             property evcode
                 function get(rule, ks) -> result
                     result := rules._keyswitches[rule * MAX_KEYSWITCHES_PER_RULE + ks]
