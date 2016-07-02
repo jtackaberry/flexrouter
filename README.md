@@ -1,19 +1,22 @@
 # FlexRouter
 
-**Version 2 is released!  Unfortunately it is not backward compatible with version 1, so you will need to recreate your rules.  Sorry. :(**
-
 Quick link: [get the compiled script for the latest version](https://urandom.ca/flexrouter/latest)
 
 
 ## What is it?
 
-FlexRouter is a highly customizable Kontakt 5 Multiscript designed for managing and unifying keyswitches.  Some features include:
+FlexRouter is a highly customizable Kontakt 5 Multiscript designed for managing and unifying keyswitches across instruments from many different developers.
 
-* support for note, program change, or  CC-based keyswitches
+Some features include:
+
+* support for note, program change, or CC-based keyswitches
+** FlexRouter refers to all these MIDI events as "keyswitches" even though they're not all strictly "keys"
 * arbitrary translation between notes, CCs, and program changes
+** one "keyswitch" input event can be translated to *multiple* configurable output events
 * can route events to instruments on ports A-D (64 separate channels)
 * multiple note-based keyswitches can be activated simultaneously (useful for e.g. layering articulations)
 * one keyswitch note/CC/PC can trigger routing to multiple target channels
+* note-based keyswitches can have configurable velocity ranges
 * one instance of FlexRouter supports 16 rules
 * each rule supports up to 128 independently configured keyswitches
 * Optional anti-hanging for notes and sustain pedal when jumping between keyswitches
@@ -22,13 +25,14 @@ FlexRouter is a highly customizable Kontakt 5 Multiscript designed for managing 
 
 Since a picture is worth a thousand words:
 
-![](https://www.urandom.ca/flexrouter/flexrouter-2.0.0.png)
+![](https://www.urandom.ca/flexrouter/flexrouter-2.1.0.png)
 
 
 Here are just a few random use-cases that can be solved using FlexRouter:
 
 * Put each articulation patch on different channels (up to 64) and control with keyswitches
   from a single channel
+* Route to different patches based on keyswitch velocity
 * Assign different instruments on channels 1 through 16, each with multiple patches for articulations, and
   control each instrument independently
 * Use UACC to control conventional note-keyswitched libraries
@@ -63,12 +67,12 @@ Create an account on GitHub and [open an issue](https://github.com/jtackaberry/f
 
 ### Hacking code
 
-First download and install [Sublime Text 3](http://www.sublimetext.com/3), and then download and install Nils Liberg's excellent [SublimeKSP](http://nilsliberg.se/ksp/) plugin for ST3.
+First download and install [Sublime Text 3](http://www.sublimetext.com/3), and then download and install the [SublimeKSP](https://github.com/nojanath/SublimeKSP#installation) plugin for ST3.
 
-While you're there, click the donate button and buy Nils a coffee for his efforts because there's no way I'd have avoided gouging out my eyes at the abomination that is KSP were it not for Nils' KSP extensions.
+While you're at it, visit [Nils Liberg's page for the original SublimeKSP](http://nilsliberg.se/ksp/) and click the donate button to buy Nils a coffee for his original work because there's no way I'd have avoided gouging out my eyes at the abomination that is KSP were it not for Nils' KSP extensions.
 
-Clone this repository, and open the KSP scripts under src/ within ST3.
+Clone the FlexRouter repository, and open the KSP scripts under src/ within ST3.
 
-Use SublimeKSP to compile flexrouter.ksp (see SublimeKSP's README.md for details) and paste the contents of the clipboard (which gets automagically populated by SublimeKSP) into Kontakt as per the installations steps above.
+Use SublimeKSP to compile flexrouter.ksp (F5 by default -- see SublimeKSP's README.md for details) and paste the contents of the clipboard (which gets automagically populated by SublimeKSP) into Kontakt as per the installations steps above.
 
 If you want to contribute changes back to FlexRouter, please use the usual GitHub workflow: fork this repository and send me a pull request.  Please don't be offended by scrutiny and nitpicking on any contributed code. :)
