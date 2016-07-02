@@ -568,8 +568,10 @@ function gui_update_for_selected_keyswitch()
     flag := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_FLAGS]
 
     if ks # KEYSWITCH_UNDEFINED
-        value_rule_keyswitch_velocity_range_min := rules[rule].keyswitch[idx].velocity.min
-        value_rule_keyswitch_velocity_range_max := rules[rule].keyswitch[idx].velocity.max
+        if ks < 128
+            value_rule_keyswitch_velocity_range_min := rules[rule].keyswitch[idx].velocity.min
+            value_rule_keyswitch_velocity_range_max := rules[rule].keyswitch[idx].velocity.max
+        end if
         menu_rule_keyswitch_source_channel := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_SOURCE_CHANNEL]
         menu_rule_keyswitch_target_channel := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_TARGET_CHANNEL]
         switch_rule_keyswitch_flags_hold_notes := flag .and. RULE_KEYSWITCH_FLAGS
