@@ -642,7 +642,7 @@ function gui_append_keyswitch_to_selected_rule
     if ks # KEYSWITCH_UNDEFINED
         // Do not allow MIDI Learn to create duplicates of a keyswitch. (Though
         // that can be done manually.)
-        idx := get_keyswitch_idx_for_rule(rule, ks)
+        idx := get_keyswitch_idx_for_rule(rule, ks, -1)
     else
         idx := -1
     end if
@@ -787,9 +787,9 @@ end function
 
 
 // Updates the UI to show the given keyswitch as selected.  Triggered by MIDI Find.
-function gui_set_selected_keyswitch_by_ks(ks)
+function gui_set_selected_keyswitch_by_ks(ks, velocity)
     rule := gui_get_selected_rule()
-    idx := get_keyswitch_idx_for_rule(rule, ks)
+    idx := get_keyswitch_idx_for_rule(rule, ks, velocity)
     if idx # -1
         menu_keyswitches := idx
         call gui_update_for_selected_keyswitch

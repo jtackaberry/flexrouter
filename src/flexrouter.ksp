@@ -349,9 +349,6 @@ function migrate_config
                 end if
             end for
         end for
-        // message("migrate config: " & rule)
-    else
-        message("")
     end if
     global_config[GLOBAL_CONFIG_VERSION] := CONFIG_VERSION
 end function
@@ -563,12 +560,16 @@ end function
 
 // Returns the index (offset from 0) for the first instance of the given
 // keyswitch if found, otherwise returns -1 if not found.
-function get_keyswitch_idx_for_rule(rule, ks) -> idx
+function get_keyswitch_idx_for_rule(rule, ks, velocity) -> idx
     idx := -1
     j := 0
     while j < MAX_KEYSWITCHES_PER_RULE and idx = -1
         if rules[rule].keyswitch[j].evcode = ks
-            idx := j
+            // For note-based keyswitches, require it to be in the velocity range.
+            if ks > 128 or velocity = -1 or (velocity >= rules[rule].keyswitch[j].velocity.min and ...
+               velocity <= rules[rule].keyswitch[j].velocity.max)
+                idx := j
+            end if
         end if
         inc(j)
     end while
@@ -731,7 +732,7 @@ on midi_in
         // Keyswitch select (MIDI Find button) for rule
         ignore_midi
         if is_note_on_event = 1 or MIDI_COMMAND = MIDI_COMMAND_CC or MIDI_COMMAND = MIDI_COMMAND_PROGRAM_CHANGE
-            gui_set_selected_keyswitch_by_ks(ks)
+            gui_set_selected_keyswitch_by_ks(ks, MIDI_BYTE_2)
         end if
     else if ks # KEYSWITCH_UNDEFINED and keyswitch_redirect_midi_learn_index # -1 // FIXME
         // MIDI learn for keyswitch redirect rule (Redirect MIDI Learn button)
