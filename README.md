@@ -10,9 +10,9 @@ FlexRouter is a highly customizable Kontakt 5 Multiscript designed for managing 
 Some features include:
 
 * support for note, program change, or CC-based keyswitches
-** FlexRouter refers to all these MIDI events as "keyswitches" even though they're not all strictly "keys"
+ * FlexRouter refers to all these MIDI events as "keyswitches" even though they're not all strictly "keys"
 * arbitrary translation between notes, CCs, and program changes
-** one "keyswitch" input event can be translated to *multiple* configurable output events
+ * one "keyswitch" input event can be translated to *multiple* configurable output events
 * can route events to instruments on ports A-D (64 separate channels)
 * multiple note-based keyswitches can be activated simultaneously (useful for e.g. layering articulations)
 * one keyswitch note/CC/PC can trigger routing to multiple target channels
