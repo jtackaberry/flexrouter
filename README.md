@@ -48,7 +48,7 @@ There's also a [walkthrough video](https://www.youtube.com/watch?v=FddWrEwaNmM) 
 
 Follow these steps:
 
-1. Download the [latest compiled script](https://urandom.ca/flexrouter/latest)
+1. Click this link for the [latest compiled script](https://urandom.ca/flexrouter/latest)
 2. Copy the contents to clipboard
 3. In your Kontakt instance, click the script button in the toolbar to open the multiscript pane
 4. Select the desired slot for the script, and click the edit button
