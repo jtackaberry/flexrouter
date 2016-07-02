@@ -284,7 +284,7 @@ macro gui_initialize
     init_channel_menu(menu_rule_keyswitch_target_channel, 64)
 
     y := y + 20
-    init_label(label_rule_keyswitch_flags, "Flags", 135, y, 55)
+    init_label(label_rule_keyswitch_flags, "Options", 135, y, 55)
     switch_rule_keyswitch_flags_hold_notes -> help := "When enabled, note redirections (see keyswitch action) will be held until the next keyswitch activation. Useful for patches that engage functionality only while a particular note is pressed."
     set_text(switch_rule_keyswitch_flags_hold_notes, "Hold redirected notes until next keyswitch")
     move_and_set_width(switch_rule_keyswitch_flags_hold_notes, 200, y, 200)
