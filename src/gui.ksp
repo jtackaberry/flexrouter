@@ -756,7 +756,7 @@ function gui_set_selected_keyswitch_config(config, value)
     // If setting the keyswitch action to redirect, then ensure the first
     // keyswitch redirect is initialized.
     if config = RULE_KEYSWITCH_ACTION and value = KEYSWITCH_ACTION_REDIRECT
-        if rules[rule].keyswitch[idx].redirects[0]._raw = KEYSWITCH_UNDEFINED
+        if rules[rule].keyswitch[idx].redirects[0].evcode = KEYSWITCH_UNDEFINED
             rules[rule].keyswitch[idx].redirects[0].evcode := 0
             rules[rule].keyswitch[idx].redirects[0].velocity := 127
         end if

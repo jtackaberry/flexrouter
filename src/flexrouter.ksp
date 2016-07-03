@@ -649,7 +649,7 @@ function trigger_keyswitch_for_rule(rule, ks, idx)
             else
                 // Action is redirect.
                 i := 0
-                while rules[rule].keyswitch[idx].redirects[i]._raw # KEYSWITCH_UNDEFINED and i < MAX_REDIRECTS_PER_KEYSWITCH
+                while rules[rule].keyswitch[idx].redirects[i].evcode # KEYSWITCH_UNDEFINED and i < MAX_REDIRECTS_PER_KEYSWITCH
                     evcode := rules[rule].keyswitch[idx].redirects[i].evcode
                     if evcode < 128
                         // Redirect to a note
