@@ -57,9 +57,11 @@ macro gui_initialize
     declare ui_label label_rule_keyswitch_velocity_range_to (1,1)
     declare ui_value_edit value_rule_keyswitch_velocity_range_max (0, 127, 1)
     // CC controls (when keyswitch type is set to CC)
-    declare ui_value_edit value_rule_keyswitch_cc (2, 127, 1)
-    declare ui_label label_rule_keyswitch_cc_slash (1,1)
-    declare ui_value_edit value_rule_keyswitch_cc_value (0, 127, 1)
+    declare ui_value_edit value_rule_keyswitch_cc (0, 127, 1)
+    declare ui_label label_rule_keyswitch_cc_value_range_from (1,1)
+    declare ui_value_edit value_rule_keyswitch_cc_value_range_min (0, 127, 1)
+    declare ui_label label_rule_keyswitch_cc_value_range_to (1,1)
+    declare ui_value_edit value_rule_keyswitch_cc_value_range_max (0, 127, 1)
     // Program controls (when redirect type is set to Progran Change)
     declare ui_value_edit value_rule_keyswitch_program (0, 127, 1)
 
@@ -96,7 +98,7 @@ macro gui_initialize
     declare ui_value_edit value_rule_keyswitch_redirect_key_velocity[MAX_GUI_REDIRECTS_PER_KEYSWITCH] (0, 127, 1)
 
     // CC redirect controls (when redirect type is set to CC)
-    declare ui_value_edit value_rule_keyswitch_redirect_cc[MAX_GUI_REDIRECTS_PER_KEYSWITCH] (2, 127, 1)
+    declare ui_value_edit value_rule_keyswitch_redirect_cc[MAX_GUI_REDIRECTS_PER_KEYSWITCH] (0, 127, 1)
     declare ui_label label_rule_keyswitch_redirect_cc_slash[MAX_GUI_REDIRECTS_PER_KEYSWITCH] (1,1)
     declare ui_value_edit value_rule_keyswitch_redirect_cc_value[MAX_GUI_REDIRECTS_PER_KEYSWITCH] (0, 127, 1)
 
@@ -192,34 +194,34 @@ macro gui_initialize
     init_label(label_keyswitches, "Keyswitches", 95, y, 95)
 
     menu_keyswitches -> help := "The list of configured keyswitches for the current rule. Up to 127 keyswitches are allowed per rule."
-    move_and_set_width(menu_keyswitches, 200, y, 80)
+    move_and_set_width(menu_keyswitches, 200, y, 100)
     for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
         add_menu_item(menu_keyswitches, "", i)
     end for
 
     button_keyswitch_new -> help := "Create a new keyswitch, whose configuration is initialized to hopefully something intelligent based on context."
     set_text(button_keyswitch_new, "New")
-    move_and_set_width(button_keyswitch_new, 290, y, 35)
+    move_and_set_width(button_keyswitch_new, 310, y, 35)
 
     button_keyswitch_midi_learn -> help :="MIDI learn a keyswitch (note, CC, or program change).  Duplicates are prevented -- if you want duplicates, you need to manually create them with the New or Clone buttons."
     set_text(button_keyswitch_midi_learn, "Learn")
-    move_and_set_width(button_keyswitch_midi_learn, 330, y, 40)
+    move_and_set_width(button_keyswitch_midi_learn, 350, y, 40)
 
     button_keyswitch_midi_learn_inc -> help := "Same as the Learn button, except the keyswitch config is initialized to values based on the relative distance between the current and newly learned keyswitches."
     set_text(button_keyswitch_midi_learn_inc, "Learn++")
-    move_and_set_width(button_keyswitch_midi_learn_inc, 375, y, 50)
+    move_and_set_width(button_keyswitch_midi_learn_inc, 395, y, 50)
 
     button_keyswitch_midi_find -> help := "Find a keyswitch based on MIDI input. Don't forget to toggle this off when you're done searching!"
     set_text(button_keyswitch_midi_find, "MIDI Find")
-    move_and_set_width(button_keyswitch_midi_find, 430, y, 55)
+    move_and_set_width(button_keyswitch_midi_find, 450, y, 55)
 
     button_keyswitch_clone -> help := "Create a new keyswitch with identical configuration."
     set_text(button_keyswitch_clone, "Clone")
-    move_and_set_width(button_keyswitch_clone, 490, y, 35)
+    move_and_set_width(button_keyswitch_clone, 510, y, 35)
 
     button_keyswitch_remove -> help := "Remove the currently selected keyswitch from the rule."
     set_text(button_keyswitch_remove, "Remove")
-    move_and_set_width(button_keyswitch_remove, 530, y, 45)
+    move_and_set_width(button_keyswitch_remove, 550, y, 45)
 
     // Remove Clear button for now.  Debating if this is worth having.
     hide(button_keyswitch_clear)
@@ -258,10 +260,19 @@ macro gui_initialize
     value_rule_keyswitch_cc -> help := "The CC number that must be received on the rule's keyswitch channel to trigger the keyswitch."
     move_and_set_width(value_rule_keyswitch_cc, 245, y, 35)
     set_text(value_rule_keyswitch_cc, "")
-    init_label(label_rule_keyswitch_cc_slash, "/", 285, y, 15)
-    value_rule_keyswitch_cc_value -> help := "The specific CC value that must be matched to trigger the keyswitch."
-    move_and_set_width(value_rule_keyswitch_cc_value, 300, y, 35)
-    set_text(value_rule_keyswitch_cc_value, "")
+    set_label_properties(label_rule_keyswitch_cc_value_range_from, "with values", 0, 1)
+    set_bounds(label_rule_keyswitch_cc_value_range_from, 285, y, 65)
+
+    value_rule_keyswitch_cc_value_range_min -> help := "The minimum CC value that must be matched to trigger the keyswitch."
+    move_and_set_width(value_rule_keyswitch_cc_value_range_min, 355, y, 35)
+    set_text(value_rule_keyswitch_cc_value_range_min, "")
+
+    set_label_properties(label_rule_keyswitch_cc_value_range_to, "to", 0, 1)
+    set_bounds(label_rule_keyswitch_cc_value_range_to, 395, y, 25)
+
+    value_rule_keyswitch_cc_value_range_max -> help := "The maximum CC value that must be matched to trigger the keyswitch."
+    move_and_set_width(value_rule_keyswitch_cc_value_range_max, 425, y, 35)
+    set_text(value_rule_keyswitch_cc_value_range_max, "")
 
     value_rule_keyswitch_program -> help := "The program change number that will trigger the keyswitch when received on the rule's keyswitch channel."
     move_and_set_width(value_rule_keyswitch_program, 245, y, 35)
@@ -443,7 +454,7 @@ function gui_update_for_selected_rule()
     for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
         ks := rules[rule].keyswitch[i].evcode
         if ks # KEYSWITCH_UNDEFINED
-            name := get_keyswitch_name(ks)
+            name := get_keyswitch_name(ks, rules[rule].keyswitch[i].velocity._raw)
             set_menu_item_str(get_ui_id(menu_keyswitches), i, name)
             set_menu_item_visibility(get_ui_id(menu_keyswitches), i, 1)
         else
@@ -491,8 +502,10 @@ function gui_set_keyswitch_section_visibility(rule, idx, ks, action)
     value_rule_keyswitch_velocity_range_max -> hide := params[1]
 
     value_rule_keyswitch_cc -> hide := params[2]
-    label_rule_keyswitch_cc_slash -> hide := params[2]
-    value_rule_keyswitch_cc_value -> hide := params[2]
+    label_rule_keyswitch_cc_value_range_from -> hide := params[2]
+    value_rule_keyswitch_cc_value_range_min -> hide := params[2]
+    label_rule_keyswitch_cc_value_range_to -> hide := params[2]
+    value_rule_keyswitch_cc_value_range_max -> hide := params[2]
     value_rule_keyswitch_program -> hide := params[3]
 
     label_rule_keyswitch_source_channel -> hide := params[0]
@@ -555,7 +568,7 @@ function gui_update_keyswitch_name()
     rule := gui_get_selected_rule()
     idx := gui_get_selected_keyswitch()
     ks := rules[rule].keyswitch[idx].evcode
-    name := get_keyswitch_name(ks)
+    name := get_keyswitch_name(ks, rules[rule].keyswitch[idx].velocity._raw)
     set_menu_item_str(get_ui_id(menu_keyswitches), idx, name)
 end function
 
@@ -571,6 +584,10 @@ function gui_update_for_selected_keyswitch()
         if ks < 128
             value_rule_keyswitch_velocity_range_min := rules[rule].keyswitch[idx].velocity.min
             value_rule_keyswitch_velocity_range_max := rules[rule].keyswitch[idx].velocity.max
+        else if ks > 128*128
+            // CC
+            value_rule_keyswitch_cc_value_range_min := rules[rule].keyswitch[idx].velocity.min
+            value_rule_keyswitch_cc_value_range_max := rules[rule].keyswitch[idx].velocity.max
         end if
         menu_rule_keyswitch_source_channel := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_SOURCE_CHANNEL]
         menu_rule_keyswitch_target_channel := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_TARGET_CHANNEL]
@@ -588,7 +605,7 @@ function gui_update_for_selected_keyswitch()
     else if ks # KEYSWITCH_UNDEFINED
         menu_rule_keyswitch_type := 1
         value_rule_keyswitch_cc := ks / 128 - 128
-        value_rule_keyswitch_cc_value := ks mod 128
+        // value_rule_keyswitch_cc_value_range_min := ks mod 128
     end if
 
     menu_rule_keyswitch_action := action
@@ -653,6 +670,7 @@ function gui_append_keyswitch_to_selected_rule
         // Determine the currently selected keyswitch in the GUI for later.
         idx := gui_get_selected_keyswitch()
         count := get_num_keyswitches_for_rule(rule)
+        velocity := VELOCITY_RANGE_DEFAULT
         if ks = KEYSWITCH_UNDEFINED
             if count > 0
                 if button_keyswitch_clone = 1
@@ -660,23 +678,31 @@ function gui_append_keyswitch_to_selected_rule
                 else
                     ks := rules[rule].keyswitch[idx].evcode + 1
                 end if
-
+                velocity := rules[rule].keyswitch[idx].velocity._raw
             else
                 // No existing keyswitches, use first note.
                 ks := 0
             end if
+        else if ks < 128 and button_keyswitch_midi_learn_inc = 1
+            // Copy velocity to new keyswitch learned via
+            velocity := rules[rule].keyswitch[idx].velocity._raw
+        else if ks > 128*128
+            // For learned CCs, set range min/max to CC value.
+            value := ks mod 128
+            velocity := value + sh_left(value, 8)
         end if
 
         if count < MAX_KEYSWITCHES_PER_RULE
-            name := get_keyswitch_name(ks)
+            name := get_keyswitch_name(ks, velocity)
             set_menu_item_str(get_ui_id(menu_keyswitches), count, name)
             set_menu_item_visibility(get_ui_id(menu_keyswitches), count, 1)
             rules[rule].keyswitch[count].evcode := ks
+            rules[rule].keyswitch[count].velocity._raw := velocity
             menu_keyswitches := count
 
             if count > 0
                 // Clone some config from the currently selected keyswitch
-                rules[rule].keyswitch[count].velocity._raw := rules[rule].keyswitch[idx].velocity._raw
+                rules[rule].keyswitch[count].config[RULE_KEYSWITCH_FLAGS] := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_FLAGS]
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_ACTION] := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_ACTION]
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_SOURCE_CHANNEL] := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_SOURCE_CHANNEL]
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_TARGET_CHANNEL] := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_TARGET_CHANNEL]
@@ -709,7 +735,6 @@ function gui_append_keyswitch_to_selected_rule
             else
                 // Initialize new keyswitch (not cloned) to blocked, all source channels,
                 // rule default target channel.
-                rules[rule].keyswitch[count].velocity._raw := VELOCITY_RANGE_DEFAULT
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_FLAGS] := 0
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_ACTION] := KEYSWITCH_ACTION_BLOCK
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_SOURCE_CHANNEL] := 0
@@ -796,7 +821,7 @@ function gui_set_selected_keyswitch_by_ks(ks, velocity)
         menu_keyswitches := idx
         call gui_update_for_selected_keyswitch
     else
-        name := get_keyswitch_name(ks)
+        name := get_keyswitch_name(ks, velocity + sh_left(velocity, 8))
         message("Keyswitch " & name & " not found for this rule")
     end if
 end function
@@ -807,18 +832,38 @@ end function
 function gui_set_selected_keyswitch_from_ui
     rule := gui_get_selected_rule()
     idx := gui_get_selected_keyswitch()
+    ks := rules[rule].keyswitch[idx].evcode
 
     if menu_rule_keyswitch_type = 0
          // Key
-        ks := value_rule_keyswitch_key
-        rules[rule].keyswitch[idx].velocity.min := value_rule_keyswitch_velocity_range_min
-        rules[rule].keyswitch[idx].velocity.max := value_rule_keyswitch_velocity_range_max
+        if ks # value_rule_keyswitch_key or rules[rule].keyswitch[idx].velocity.min # value_rule_keyswitch_velocity_range_min or ...
+           rules[rule].keyswitch[idx].velocity.max # value_rule_keyswitch_velocity_range_max
+            flag := 1
+            rules[rule].keyswitch[idx].evcode := value_rule_keyswitch_key
+            rules[rule].keyswitch[idx].velocity.min := value_rule_keyswitch_velocity_range_min
+            rules[rule].keyswitch[idx].velocity.max := value_rule_keyswitch_velocity_range_max
+        end if
     else if menu_rule_keyswitch_type = 2
         // Program
-        ks := 128 + value_rule_keyswitch_program
+        evcode := 128 + value_rule_keyswitch_program
+        if ks # evcode
+            flag := 1
+            rules[rule].keyswitch[idx].evcode := evcode
+        end if
     else
-        // CC
-        ks := 128*128 + value_rule_keyswitch_cc * 128 + value_rule_keyswitch_cc_value
+        // CCs with value ranges have the CC value as 0 in the evcode, to indicate the range needs
+        // to be checked.
+        evcode := 128*128 + value_rule_keyswitch_cc * 128
+        if value_rule_keyswitch_cc_value_range_min = value_rule_keyswitch_cc_value_range_max
+            evcode := evcode + value_rule_keyswitch_cc_value_range_min
+        end if
+        if ks # evcode or rules[rule].keyswitch[idx].velocity.min # value_rule_keyswitch_cc_value_range_min or ...
+           rules[rule].keyswitch[idx].velocity.max # value_rule_keyswitch_cc_value_range_max
+            flag := 1
+            rules[rule].keyswitch[idx].evcode := evcode
+            rules[rule].keyswitch[idx].velocity.min := value_rule_keyswitch_cc_value_range_min
+            rules[rule].keyswitch[idx].velocity.max := value_rule_keyswitch_cc_value_range_max
+        end if
     end if
     rules[rule].keyswitch[idx].evcode := ks
     call gui_update_for_selected_keyswitch
@@ -1130,7 +1175,12 @@ end on
 
 
 // Keyswitch CC value changed
-on ui_control(value_rule_keyswitch_cc_value)
+on ui_control(value_rule_keyswitch_cc_value_range_min)
+    call gui_set_selected_keyswitch_from_ui
+    need_maps_rebuild := 1
+end on
+
+on ui_control(value_rule_keyswitch_cc_value_range_max)
     call gui_set_selected_keyswitch_from_ui
     call gui_update_keyswitch_name
     need_maps_rebuild := 1

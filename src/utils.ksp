@@ -41,15 +41,21 @@ function debug(msg)
 end function
 
 
-function get_keyswitch_name(ks) -> name
+function get_keyswitch_name(ks, range) -> name
     if ks < 0 or ks = KEYSWITCH_UNDEFINED
         name := "Undefined"
     else if ks < 128
         name := !note_names[ks]
+        if range # VELOCITY_RANGE_DEFAULT
+            name := name & "   vel " & (range .and. 0xff) & "-" & (sh_right(range, 8) .and. 0xff)
+        end if
     else if ks < 256
         name := "Prog " & (ks mod 128)
     else
-        name := "CC" & (ks / 128 - 128) & "/" & (ks mod 128)
+        name := "CC" & (ks / 128 - 128) & " / " & (range .and. 0xff)
+        if (range .and. 0xff) # (sh_right(range, 8) .and. 0xff)
+            name := name & "-" & (sh_right(range, 8) .and. 0xff)
+        end if
     end if
 end function
 

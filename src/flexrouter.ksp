@@ -115,6 +115,11 @@ on init
 
         family keyswitch
             // An "evcode" is a custom 16-bit encoding of a MIDI event.  See below for description.
+            //
+            // For CC keyswitches, a value of 0 in the evcode indicates that the value range
+            // must be checked.  It could actually be a single CC value 0, in which case the
+            // value range will be 0-0.  Note that even in the case of non-range CCs (i.e.
+            // single value), the value range will be set properly.
             property evcode
                 function get(rule, ks) -> result
                     result := rules._keyswitches[rule * MAX_KEYSWITCHES_PER_RULE + ks]
@@ -350,6 +355,19 @@ function migrate_config
             end for
         end for
     end if
+    if global_config[GLOBAL_CONFIG_VERSION] < 3
+        // Convert all CC keyswitches to support value ranges
+        for rule := 0 to MAX_RULES - 1
+            for ks := 0 to MAX_KEYSWITCHES_PER_RULE - 1
+                // Convert old undefined ks value (-1) to new one (KEYSWITCH_UNDEFINED)
+                if rules[rule].keyswitch[ks].evcode > 128*128
+                    value := rules[rule].keyswitch[ks].evcode mod 128
+                    rules[rule].keyswitch[ks].velocity.min := value
+                    rules[rule].keyswitch[ks].velocity.max := value
+                end if
+            end for
+        end for
+    end if
     global_config[GLOBAL_CONFIG_VERSION] := CONFIG_VERSION
 end function
 
@@ -425,25 +443,37 @@ function build_ks_maps
     for i := 0 to MAX_RULES - 1
         if rules[i].config[RULE_DEFINED] = 1 and rules[i].config[RULE_ENABLED] = 1
             for j := 0 to MAX_KEYSWITCHES_PER_RULE - 1
-                ks := rules[i].keyswitch[j].evcode
-                if ks # KEYSWITCH_UNDEFINED
-                    source := rules[i].config[RULE_KEYSWITCH_CHANNEL]
-                    if source = -1
-                        // Keyswitches are omni
-                        for source := 0 to NUM_SOURCE_CHANNELS - 1
-                            ks_to_keyswitch_channels[ks] := ks_to_keyswitch_channels[ks] .or. sh_left(1, source)
-                        end for
+                evcode := rules[i].keyswitch[j].evcode
+                if evcode # KEYSWITCH_UNDEFINED
+                    if evcode < 128*128 or evcode mod 128 # 0
+                        // Not a CC with range, so map the given evcode.
+                        map_ks_evcode(i, evcode)
                     else
-                        // Keyswitches only on one channel.
-                        ks_to_keyswitch_channels[ks] := ks_to_keyswitch_channels[ks] .or. sh_left(1, source - 1)
+                        // Evcode may be a range-based CC, so need to map all CC values
+                        // within range.
+                        for value := rules[i].keyswitch[j].velocity.min to rules[i].keyswitch[j].velocity.max
+                            map_ks_evcode(i, evcode + value)
+                        end for
                     end if
-                    ks_to_rules[ks] := ks_to_rules[ks] .or. sh_left(1, i)
                 end if
             end for
         end if
     end for
 end function
 
+function map_ks_evcode(rule, evcode)
+    source := rules[rule].config[RULE_KEYSWITCH_CHANNEL]
+    if source = -1
+        // Keyswitches are omni
+        for source := 0 to NUM_SOURCE_CHANNELS - 1
+            ks_to_keyswitch_channels[evcode] := ks_to_keyswitch_channels[evcode] .or. sh_left(1, source)
+        end for
+    else
+        // Keyswitches only on one channel.
+        ks_to_keyswitch_channels[evcode] := ks_to_keyswitch_channels[evcode] .or. sh_left(1, source - 1)
+    end if
+    ks_to_rules[evcode] := ks_to_rules[evcode] .or. sh_left(1, rule)
+end function
 
 // Configures routing so that all non-keyswitch events on the given source channel
 // (offset from 0, i.e. MIDI channel 1 is value 0) are diverts to the given target
@@ -564,10 +594,14 @@ function get_keyswitch_idx_for_rule(rule, ks, velocity) -> idx
     idx := -1
     j := 0
     while j < MAX_KEYSWITCHES_PER_RULE and idx = -1
-        if rules[rule].keyswitch[j].evcode = ks
-            // For note-based keyswitches, require it to be in the velocity range.
-            if ks > 128 or velocity = -1 or (velocity >= rules[rule].keyswitch[j].velocity.min and ...
-               velocity <= rules[rule].keyswitch[j].velocity.max)
+        if rules[rule].keyswitch[j].evcode = ks or ...
+           (ks >= 128*128 and rules[rule].keyswitch[j].evcode = ks / 128 * 128)
+            // For note-based keyswitches, only trigger if the velocity is in range.
+            // Similarly, for CCs, ensure the CC value is within range.
+            if (ks > 128 and ks < 128*128) or ...
+               (velocity >= rules[rule].keyswitch[j].velocity.min and ...
+                velocity <= rules[rule].keyswitch[j].velocity.max) or ...
+               velocity = -1
                 idx := j
             end if
         end if
@@ -767,10 +801,16 @@ on midi_in
                     // TODO: use a sentinel to indicate the end of keyswitches to avoid
                     // needlessly iterating all of them.
                     for idx := 0 to MAX_KEYSWITCHES_PER_RULE - 1
-                        if rules[rule].keyswitch[idx].evcode = ks
+                        // We know the ks evcode matches this rule if the rule evcode is equal, or
+                        // for CC keyswitches, if the CC number matches.  We'll test the note
+                        // velocity and CC value next.
+                        if rules[rule].keyswitch[idx].evcode = ks or ...
+                           (ks >= 128*128 and rules[rule].keyswitch[idx].evcode = ks / 128 * 128)
                             // For note-based keyswitches, only trigger if the velocity is in range.
-                            if ks > 128 or (MIDI_BYTE_2 >= rules[rule].keyswitch[idx].velocity.min and ...
-                               MIDI_BYTE_2 <= rules[rule].keyswitch[idx].velocity.max)
+                            // Similarly, for CCs, ensure the CC value is within range.
+                            if (ks > 128 and ks < 128*128) or ...
+                               (MIDI_BYTE_2 >= rules[rule].keyswitch[idx].velocity.min and ...
+                                MIDI_BYTE_2 <= rules[rule].keyswitch[idx].velocity.max)
                                 trigger_keyswitch_for_rule(rule, ks, idx)
                                 triggered := 1
                             end if
