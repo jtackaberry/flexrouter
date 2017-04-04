@@ -112,6 +112,7 @@ macro gui_initialize
     declare keyswitch_redirect_midi_learn_index := -1
 
     declare y := 10
+    declare keyswitch_name_update_parallelism := 0
 
     // CONTROL INITIALIZATION
 
@@ -564,13 +565,27 @@ function gui_set_keyswitch_section_visibility(rule, idx, ks, action)
     end for
 end function
 
-function gui_update_keyswitch_name()
+// Updates the current keyswitch menu label based on the current defined keyswitch.
+function gui_update_keyswitch_name
     rule := gui_get_selected_rule()
     idx := gui_get_selected_keyswitch()
     ks := rules[rule].keyswitch[idx].evcode
     name := get_keyswitch_name(ks, rules[rule].keyswitch[idx].velocity._raw)
     set_menu_item_str(get_ui_id(menu_keyswitches), idx, name)
 end function
+
+// A deferred version of above, to mitigate a UX problem when adjusting value controls
+// that affect the keyswitch name.  The menu item will be updated after 500ms of
+// inactivity.
+function gui_update_keyswitch_name_defer
+    keyswitch_name_update_parallelism := keyswitch_name_update_parallelism + 1
+    wait(500000)
+    keyswitch_name_update_parallelism := keyswitch_name_update_parallelism - 1
+    if keyswitch_name_update_parallelism = 0
+        call gui_update_keyswitch_name
+    end if
+end function
+
 
 // Adjusts all the UI elements to reflect the currently selected keyswitch (for the current rule)
 function gui_update_for_selected_keyswitch()
@@ -834,6 +849,13 @@ function gui_set_selected_keyswitch_from_ui
     idx := gui_get_selected_keyswitch()
     ks := rules[rule].keyswitch[idx].evcode
 
+    // This is far uglier than it should have to be.  But we need to do all this lame
+    // comparison of current values to determine if gui_update_keyswitch_name_defer()
+    // actually needs to be called, because if we call set_menu_item_str it changes
+    // control focus and breaks UX.
+    //
+    // If 1, it means the values have actually changed.
+    flag := 0
     if menu_rule_keyswitch_type = 0
          // Key
         if ks # value_rule_keyswitch_key or rules[rule].keyswitch[idx].velocity.min # value_rule_keyswitch_velocity_range_min or ...
@@ -865,8 +887,11 @@ function gui_set_selected_keyswitch_from_ui
             rules[rule].keyswitch[idx].velocity.max := value_rule_keyswitch_cc_value_range_max
         end if
     end if
-    rules[rule].keyswitch[idx].evcode := ks
-    call gui_update_for_selected_keyswitch
+    if flag = 1
+        // Only update GUI if there were changes.
+        call gui_update_for_selected_keyswitch
+        call gui_update_keyswitch_name_defer
+    end if
 end function
 
 
@@ -1150,7 +1175,6 @@ end on
 // Keyswitch note changed
 on ui_control(value_rule_keyswitch_key)
     call gui_set_selected_keyswitch_from_ui
-    call gui_update_keyswitch_name
     need_maps_rebuild := 1
 end on
 
@@ -1165,11 +1189,9 @@ on ui_control(value_rule_keyswitch_velocity_range_max)
     call gui_set_selected_keyswitch_from_ui
 end on
 
-
 // Keyswitch CC number changed
 on ui_control(value_rule_keyswitch_cc)
     call gui_set_selected_keyswitch_from_ui
-    call gui_update_keyswitch_name
     need_maps_rebuild := 1
 end on
 
@@ -1182,7 +1204,6 @@ end on
 
 on ui_control(value_rule_keyswitch_cc_value_range_max)
     call gui_set_selected_keyswitch_from_ui
-    call gui_update_keyswitch_name
     need_maps_rebuild := 1
 end on
 
@@ -1190,7 +1211,6 @@ end on
 // Keyswitch program change number changed
 on ui_control(value_rule_keyswitch_program)
     call gui_set_selected_keyswitch_from_ui
-    call gui_update_keyswitch_name
     need_maps_rebuild := 1
 end on
 
