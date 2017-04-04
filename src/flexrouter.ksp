@@ -2,7 +2,7 @@ import "utils.ksp"
 import "gui.ksp"
 
 on init
-    set_script_title("FlexRouter 2.1.0")
+    set_script_title("FlexRouter 2.2.0")
     declare const DEBUG := 1
     declare const CONFIG_VERSION := 3
 
