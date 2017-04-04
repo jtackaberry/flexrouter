@@ -62,6 +62,7 @@ on init
     // A bitmap of flags for this keyswitch.
     declare const RULE_KEYSWITCH_FLAGS := 1
     declare const KEYSWITCH_FLAG_HOLD_NOTES := 1
+    declare const KEYSWITCH_FLAG_IGNORE_ROUTING := 2
 
 
     // When the keyswitch is activated, non-keyswitch MIDI events received on this channel will be
@@ -272,6 +273,7 @@ on init
     declare idx
     declare i
     declare j
+    declare k
     declare count
     declare ks
     declare source
@@ -322,7 +324,7 @@ on init
     migrate_config()
 
     gui_initialize()
-    // message("")
+    message("")
 end on
 
 function migrate_config
@@ -648,20 +650,22 @@ function trigger_keyswitch_for_rule(rule, ks, idx)
         target := rules[rule].config[RULE_TARGET_CHANNEL]
     end if
 
+    flag := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_FLAGS]
     if target > 0
         target := target - 1
         action := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_ACTION]
-
-        if source = -1
-            // Route all channels to keyswitch target.
-            for j := 0 to NUM_SOURCE_CHANNELS - 1
-                set_active_route_for_channel(rule, j, target)
-                chase_global_ccs_for_source_channel(rule, j, target)
-            end for
-        else
-            // Route specific channel to keyswitch target.
-            set_active_route_for_channel(rule, source - 1, target)
-            chase_ccs_for_source_channel(rule, source - 1, target)
+        if flag .and. KEYSWITCH_FLAG_IGNORE_ROUTING = 0
+            if source = -1
+                // Route all channels to keyswitch target.
+                for j := 0 to NUM_SOURCE_CHANNELS - 1
+                    set_active_route_for_channel(rule, j, target)
+                    chase_global_ccs_for_source_channel(rule, j, target)
+                end for
+            else
+                // Route specific channel to keyswitch target.
+                set_active_route_for_channel(rule, source - 1, target)
+                chase_ccs_for_source_channel(rule, source - 1, target)
+            end if
         end if
 
         debug("keyswitch " & ks & " triggered (action " & action & "), route " & source & " -> " & target + 1 & " (" & rules[rule].name & ")")
@@ -690,7 +694,7 @@ function trigger_keyswitch_for_rule(rule, ks, idx)
                         velocity := rules[rule].keyswitch[idx].redirects[i].velocity
                         set_midi(target, MIDI_COMMAND_NOTE_ON, evcode, velocity)
 
-                        if rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_FLAGS] .and. KEYSWITCH_FLAG_HOLD_NOTES # 0
+                        if flag .and. KEYSWITCH_FLAG_HOLD_NOTES # 0
                             // Track keyswitch note which is being held until next keyswitch.  This is O(n) with
                             // respect to the number of held keyswitches so it will degrade in pathological cases
                             // but in practice the list will be quite small.
@@ -713,7 +717,8 @@ function trigger_keyswitch_for_rule(rule, ks, idx)
                 end while
             end if
         end if
-    else
+    // Do not process blackhole if keyswitch is set for no routing
+    else if flag .and. KEYSWITCH_FLAG_IGNORE_ROUTING = 0
         // Source is to be blackholed.
         if source = -1
             // Source is omni, so blackhole all channels.

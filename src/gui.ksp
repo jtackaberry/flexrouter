@@ -78,6 +78,7 @@ macro gui_initialize
     // Keyswitch flags
     declare ui_label label_rule_keyswitch_flags (1,1)
     declare ui_switch switch_rule_keyswitch_flags_hold_notes
+    declare ui_switch switch_rule_keyswitch_flags_redirect_only
 
     // Keyswitch action menu (block, passthrough, redirect)
     declare ui_label label_rule_keyswitch_action (1,1)
@@ -297,9 +298,16 @@ macro gui_initialize
 
     y := y + 20
     init_label(label_rule_keyswitch_flags, "Options", 135, y, 55)
+
     switch_rule_keyswitch_flags_hold_notes -> help := "When enabled, note redirections (see keyswitch action) will be held until the next keyswitch activation. Useful for patches that engage functionality only while a particular note is pressed."
     set_text(switch_rule_keyswitch_flags_hold_notes, "Hold redirected notes until next keyswitch")
     move_and_set_width(switch_rule_keyswitch_flags_hold_notes, 200, y, 200)
+    center(switch_rule_keyswitch_flags_hold_notes)
+
+    switch_rule_keyswitch_flags_redirect_only -> help := "When enabled, triggering the keyswitch will affect routing of subsequent MIDI events, which is useful for processing redirections only, or blocking keyswitches."
+    set_text(switch_rule_keyswitch_flags_redirect_only, "Ignore routing")
+    move_and_set_width(switch_rule_keyswitch_flags_redirect_only, 410, y, 80)
+    center(switch_rule_keyswitch_flags_redirect_only)
 
     y := y + 20
     init_label(label_rule_keyswitch_action, "KS Action", 135, y, 55)
@@ -515,6 +523,7 @@ function gui_set_keyswitch_section_visibility(rule, idx, ks, action)
     menu_rule_keyswitch_target_channel -> hide := params[4]
     label_rule_keyswitch_flags -> hide := params[0]
     switch_rule_keyswitch_flags_hold_notes -> hide := params[4]
+    switch_rule_keyswitch_flags_redirect_only -> hide := params[4]
 
     for i := 0 to MAX_GUI_REDIRECTS_PER_KEYSWITCH - 1
         // Initialize show/hide parameters based on keyswitch config context
@@ -606,7 +615,8 @@ function gui_update_for_selected_keyswitch()
         end if
         menu_rule_keyswitch_source_channel := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_SOURCE_CHANNEL]
         menu_rule_keyswitch_target_channel := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_TARGET_CHANNEL]
-        switch_rule_keyswitch_flags_hold_notes := flag .and. RULE_KEYSWITCH_FLAGS
+        switch_rule_keyswitch_flags_hold_notes := flag .and. KEYSWITCH_FLAG_HOLD_NOTES
+        switch_rule_keyswitch_flags_redirect_only := flag .and. KEYSWITCH_FLAG_IGNORE_ROUTING
     end if
 
     gui_set_keyswitch_section_visibility(rule, idx, ks, action)
@@ -666,7 +676,7 @@ end function
 
 
 // Adds the given keyswitch number to the currently selected rule.  Triggered by MIDI learn and the
-// New and Clone buttons. This function undertsands the UI context (which button was pressed)
+// New and Clone buttons. This function understands the UI context (which button was pressed)
 // and acts accordingly.
 
 // Caller must set ks variable to the request keyswitch evcode.
@@ -1316,4 +1326,8 @@ end on
 // Keyswitch flags changed
 on ui_control(switch_rule_keyswitch_flags_hold_notes)
     gui_set_selected_keyswitch_config_flags(KEYSWITCH_FLAG_HOLD_NOTES, switch_rule_keyswitch_flags_hold_notes)
+end on
+
+on ui_control(switch_rule_keyswitch_flags_redirect_only)
+    gui_set_selected_keyswitch_config_flags(KEYSWITCH_FLAG_IGNORE_ROUTING, switch_rule_keyswitch_flags_redirect_only)
 end on
