@@ -1,19 +1,13 @@
 # FlexRouter
 
-## Down to brass tacks: quick installation
-
-1. Click the link for [the compiled script](https://urandom.ca/flexrouter/latest)
-2. Copy to clipboard (usually ctrl-a followed by ctrl-c)
-3. Open Kontakt and click the KSP icon (which look like a parchment scroll in earlier Kontakt versions)
-4. Click the Edit button
-5. Paste the script into the text edit area (ctrl-v)
-6. Click Apply, and click Edit again to close the text edit area
-
+*Quick link to [the compiled script for the latest version](https://urandom.ca/flexrouter/latest)*
 
 
 ## What is it?
 
 FlexRouter is a highly customizable Kontakt 5 Multiscript designed for managing and unifying keyswitches across instruments from many different developers.
+
+![](https://www.urandom.ca/flexrouter/flexrouter-2.2.0.png)
 
 Some features include:
 
@@ -31,10 +25,22 @@ Some features include:
 * Optional CC chasing per rule
 * probably a few bugs :)
 
-Since a picture is worth a thousand words:
 
-![](https://www.urandom.ca/flexrouter/flexrouter-2.2.0.png)
+## How do I install it?
 
+Follow these steps:
+
+1. Click this link for the [latest compiled script](https://urandom.ca/flexrouter/latest)
+2. Copy the contents to clipboard (usually ctrl-a followed by ctrl-c)
+3. In your Kontakt instance, click the KSP button in the toolbar (which look like a parchment scroll in earlier Kontakt versions) to open the multiscript pane
+4. Select the desired slot for the script, and click the edit button
+5. Paste the clipboard contents into the newly opened text edit area (ctrl-v)
+6. Click the Apply button
+7. Click the Edit button again to close the text edit area
+
+
+
+## What kinds of things can I use it for?
 
 Here are just a few random use-cases that can be solved using FlexRouter:
 
@@ -50,20 +56,6 @@ Here are just a few random use-cases that can be solved using FlexRouter:
 
 There's also a [walkthrough video](https://www.youtube.com/watch?v=FddWrEwaNmM) that shows how to implement some of these use-cases.
 (Note, the video shows version 1, but all the examples still work with version 2.)
-
-
-## How do I install it?
-
-Follow these steps:
-
-1. Click this link for the [latest compiled script](https://urandom.ca/flexrouter/latest)
-2. Copy the contents to clipboard
-3. In your Kontakt instance, click the script button in the toolbar to open the multiscript pane
-4. Select the desired slot for the script, and click the edit button
-5. Paste the clipboard contents into the newly opened text area
-6. Click the Apply button
-7. Click the Edit button again to close the edit text area
-
 
 
 ## How do I contribute or make my own customizations?
