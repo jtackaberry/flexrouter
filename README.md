@@ -1,6 +1,14 @@
 # FlexRouter
 
-Quick link: [get the compiled script for the latest version](https://urandom.ca/flexrouter/latest)
+## Down to brass tacks: quick installation
+
+1. Click the link for [the compiled script](https://urandom.ca/flexrouter/latest)
+2. Copy to clipboard (usually ctrl-a followed by ctrl-c)
+3. Open Kontakt and click the KSP icon (which look like a parchment scroll in earlier Kontakt versions)
+4. Click the Edit button
+5. Paste the script into the text edit area (ctrl-v)
+6. Click Apply, and click Edit again to close the text edit area
+
 
 
 ## What is it?
@@ -16,7 +24,7 @@ Some features include:
 * can route events to instruments on ports A-D (64 separate channels)
 * multiple note-based keyswitches can be activated simultaneously (useful for e.g. layering articulations)
 * one keyswitch note/CC/PC can trigger routing to multiple target channels
-* note-based keyswitches can have configurable velocity ranges
+* note- and CC-based keyswitches can have configurable velocity/value ranges
 * one instance of FlexRouter supports 16 rules
 * each rule supports up to 128 independently configured keyswitches
 * Optional anti-hanging for notes and sustain pedal when jumping between keyswitches
@@ -25,7 +33,7 @@ Some features include:
 
 Since a picture is worth a thousand words:
 
-![](https://www.urandom.ca/flexrouter/flexrouter-2.1.0.png)
+![](https://www.urandom.ca/flexrouter/flexrouter-2.2.0.png)
 
 
 Here are just a few random use-cases that can be solved using FlexRouter:
