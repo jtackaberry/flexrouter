@@ -551,17 +551,10 @@ function _chase(rule, source, target, cc, value)
     // It was intuitive to avoid chasing if source == target, but intuition failed: that's still
     // necessary because the source could have been rerouted to a different target, so we
     // still need to chase CCs if we switch back.
-
     if value >= 0
         flag := should_chase_cc(rule, cc)
         if flag = 1
             set_midi(target, MIDI_COMMAND_CC, cc, value)
-            // Update stored CC value for this source channel.
-            last_cc_values_by_source[target * NUM_SOURCE_CHANNELS + j] := value
-            offset := source * 2
-            idx := offset + cc * 2
-            active_ccs_routes_bitmap[idx] := active_ccs_routes_bitmap[idx] .or. active_routes_bitmap[offset]
-            active_ccs_routes_bitmap[idx + 1] := active_notes_routes_bitmap[idx + 1] .or. active_routes_bitmap[offset + 1]
         end if
     end if
 end function
@@ -840,15 +833,17 @@ on midi_in
         end if
     else
         // Non-keyswitch event.  Route to active targets.
+        // FIXME: find better names
         offset := MIDI_CHANNEL * 2
-        idx := offset + MIDI_BYTE_1 * 2
+        idx := MIDI_CHANNEL * 128 * 2 + MIDI_BYTE_1 * 2
 
         // Prevent note hanging.
         if is_note_off_event = 1
             // Check to see if the active channels for the given note is different from the active routes
             // for this MIDI channel.  If it is, then send the note off event to those channels.  It's
             // technically redundant to route the event to the active channels later, but it's not worth
-            // avoiding the repeated note off for this uncommon case.
+            // avoiding the repeated note off for this uncommon case, since the active note routes is
+            // a superset of the active routes for note-off events.
             if active_notes_routes_bitmap[idx] # active_routes_bitmap[offset] or ...
                active_notes_routes_bitmap[idx + 1] # active_routes_bitmap[offset + 1]
                 route_midi_event(active_notes_routes_bitmap, idx, MIDI_COMMAND, MIDI_BYTE_1, MIDI_BYTE_2)
@@ -862,13 +857,15 @@ on midi_in
             active_notes_routes_bitmap[idx + 1] := active_notes_routes_bitmap[idx + 1] .or. active_routes_bitmap[offset + 1]
         end if
 
-        if ks >= 256
+        // Special treatment for CC events.
+        if MIDI_COMMAND = MIDI_COMMAND_CC
             // Remember this value for CC chasing.
             last_cc_values_by_source[MIDI_CHANNEL * NUM_SOURCE_CHANNELS + MIDI_BYTE_1] := MIDI_BYTE_2
             last_cc_values[MIDI_BYTE_1] := MIDI_BYTE_2
 
-            // Prevent CC hanging.
             if MIDI_BYTE_2 = 0
+                // Prevent CC hanging: copy 0-value event to all target channels this CC was previously
+                // sent to across prior keyswitches.
                 j := should_prevent_cc_hang(MIDI_BYTE_1)
                 if j = 1 and (active_ccs_routes_bitmap[idx] # active_routes_bitmap[offset] or ...
                    active_ccs_routes_bitmap[idx + 1] # active_routes_bitmap[offset + 1])
@@ -878,13 +875,12 @@ on midi_in
                 active_ccs_routes_bitmap[idx] := 0
                 active_ccs_routes_bitmap[idx + 1] := 0
             else
-                // Track all active routing channels for the CC being triggered.
+                // This is a non-zero CC value: keep track of all active routing
+                // channels for the CC being triggered.
                 active_ccs_routes_bitmap[idx] := active_ccs_routes_bitmap[idx] .or. active_routes_bitmap[offset]
-                active_ccs_routes_bitmap[idx + 1] := active_notes_routes_bitmap[idx + 1] .or. active_routes_bitmap[offset + 1]
+                active_ccs_routes_bitmap[idx + 1] := active_ccs_routes_bitmap[idx + 1] .or. active_routes_bitmap[offset + 1]
             end if
         end if
-
-        // Prevent hanging for certain CCs.
 
         // Now route the event to all active channels if there are active routes for this MIDI channel.
         // If there aren't any active routes, we don't interfere with the event.
