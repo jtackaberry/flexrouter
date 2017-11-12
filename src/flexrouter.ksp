@@ -265,6 +265,7 @@ on init
 
     // Non-state variable
 
+    // FIXME: num_ks_down should be tracked per channel
     declare num_ks_down := 0
     declare is_note_on_event
     declare is_note_off_event
@@ -872,7 +873,29 @@ on midi_in
             last_cc_values_by_source[MIDI_CHANNEL * NUM_SOURCE_CHANNELS + MIDI_BYTE_1] := MIDI_BYTE_2
             last_cc_values[MIDI_BYTE_1] := MIDI_BYTE_2
 
-            if MIDI_BYTE_2 = 0
+            if MIDI_BYTE_1 = 123
+                // Handle All Notes Off message
+                // FIXME: because num_ks_down is global rather than per channel, we clear the entire
+                // active keyswitch source bitmap.  Once we fix num_ks_down to be tracked per channel,
+                // this should be revised to just 0 the bit appropriate bit for the channel.  For now
+                // we'll live with the big because the common case is that CC123 will be blasted on
+                // all channels.
+                num_ks_down := 0
+                active_keyswitch_source_channels_bitmap := 0
+                // Determine which destination channels need to receive the CC123 by looking at the
+                // destination channels bitmap for all active notes for this source channel.
+                j := 0 // bitmap for channels 0-31
+                k := 0 // bitmap for channels 32-63
+                for i := MIDI_CHANNEL * 128 * 2 to MIDI_CHANNEL * 128 * 2 + 127 * 2 step 2
+                    j := j .or. active_notes_routes_bitmap[i]
+                    k := k .or. active_notes_routes_bitmap[i + 1]
+                    // Now clear any channels for this note.
+                    active_notes_routes_bitmap[i] := 0
+                    active_notes_routes_bitmap[i + 1] := 0
+                end for
+                _route_midi_event_int32(j, 0, MIDI_COMMAND, MIDI_BYTE_1, MIDI_BYTE_2)
+                _route_midi_event_int32(k, 32, MIDI_COMMAND, MIDI_BYTE_1, MIDI_BYTE_2)
+            else if MIDI_BYTE_2 = 0
                 // Prevent CC hanging: copy 0-value event to all target channels this CC was previously
                 // sent to across prior keyswitches.
                 j := should_prevent_cc_hang(MIDI_BYTE_1)
