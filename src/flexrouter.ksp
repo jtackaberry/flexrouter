@@ -558,7 +558,7 @@ function _chase(rule, source, target, cc, value)
             set_midi(target, MIDI_COMMAND_CC, cc, value)
             if value > 0
                 // If we just chased a non-zero value, then keep track of the target channel
-                // in the active CCs routes.  For example, if we're chasing sustain pedal on
+                // in the active CCs routes.  For example, if we're chasing sustain pedal
                 // across multiple channels, we want to ensure we are able to later replay
                 // sustain pedal off to this target channel for anti hanging.
                 idx := source * 128 * 2 + cc * 2
@@ -877,8 +877,8 @@ on midi_in
                 // Handle All Notes Off message
                 // FIXME: because num_ks_down is global rather than per channel, we clear the entire
                 // active keyswitch source bitmap.  Once we fix num_ks_down to be tracked per channel,
-                // this should be revised to just 0 the bit appropriate bit for the channel.  For now
-                // we'll live with the big because the common case is that CC123 will be blasted on
+                // this should be revised to just 0 the appropriate bit for the channel.  For now
+                // we'll live with the bug because the common case is that CC123 will be blasted on
                 // all channels.
                 num_ks_down := 0
                 active_keyswitch_source_channels_bitmap := 0
