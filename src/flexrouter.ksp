@@ -2,9 +2,9 @@ import "utils.ksp"
 import "gui.ksp"
 
 on init
-    set_script_title("FlexRouter 2.2.1")
+    set_script_title("FlexRouter 2.2.2")
     declare const DEBUG := 1
-    declare const CONFIG_VERSION := 3
+    declare const CONFIG_VERSION := 4
 
     declare const MAX_GLOBAL_CONFIG := 32
     // Version for saved data.  This will be the piece of data stored.
