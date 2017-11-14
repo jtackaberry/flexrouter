@@ -7,7 +7,7 @@ on init
     declare const CONFIG_VERSION := 4
 
     declare const MAX_GLOBAL_CONFIG := 32
-    // Version for saved data.  This will be the piece of data stored.
+    // Version for saved data.  This will be the first piece of data persisted.
     declare const GLOBAL_CONFIG_VERSION := 0
     // 0 = Allow CC hanging, 1 = Prevent hanging for all CCs, 2 = prevent CC hanging for CC 2/64
     declare const GLOBAL_CONFIG_CC_HANGING := 1
