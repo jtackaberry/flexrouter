@@ -1116,7 +1116,10 @@ on ui_control(button_keyswitch_remove)
         menu_keyswitches := count - 2
     end if
 
-    while ks < MAX_KEYSWITCHES_PER_RULE
+    // Clear current keyswitch
+    rules[rule].keyswitch[ks].evcode := KEYSWITCH_UNDEFINED
+    // Now copy all subsequent keyswitches over top
+    while ks < MAX_KEYSWITCHES_PER_RULE - 1
         rules[rule].keyswitch[ks].evcode := rules[rule].keyswitch[ks + 1].evcode
         rules[rule].keyswitch[ks + 1].evcode := KEYSWITCH_UNDEFINED
         name := get_menu_item_str(get_ui_id(menu_keyswitches), ks + 1)
