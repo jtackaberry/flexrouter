@@ -304,7 +304,7 @@ macro gui_initialize
     move_and_set_width(switch_rule_keyswitch_flags_hold_notes, 200, y, 200)
     center(switch_rule_keyswitch_flags_hold_notes)
 
-    switch_rule_keyswitch_flags_redirect_only -> help := "When enabled, triggering the keyswitch will affect routing of subsequent MIDI events, which is useful for processing redirections only, or blocking keyswitches."
+    switch_rule_keyswitch_flags_redirect_only -> help := "When enabled, triggering the keyswitch will not affect routing of subsequent MIDI events, which is useful for processing redirections only, or blocking keyswitches."
     set_text(switch_rule_keyswitch_flags_redirect_only, "Ignore routing")
     move_and_set_width(switch_rule_keyswitch_flags_redirect_only, 410, y, 80)
     center(switch_rule_keyswitch_flags_redirect_only)
