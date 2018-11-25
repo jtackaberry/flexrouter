@@ -248,7 +248,7 @@ on init
     // Tracks all target channels for all non-zero CCs.  This doesn't tell us the value, but tells us
     // if that target channel has see a non-zero value for this CC.  This is used to prevent hanging
     // for sustain and breath CCs.  Again, two 32-bit bitmaps for the 64 channels.
-    declare active_ccs_routes_bitmap[NUM_SOURCE_CHANNELS * 128*2] := (0)
+    declare active_ccs_routes_bitmap[NUM_SOURCE_CHANNELS * 128 * 2] := (0)
 
     // Track last CC values (both globally and per source channel) for CC chasing.
     declare last_cc_values_by_source[NUM_SOURCE_CHANNELS * 128] := (-1)
@@ -479,7 +479,7 @@ function map_ks_evcode(rule, evcode)
 end function
 
 // Configures routing so that all non-keyswitch events on the given source channel
-// (offset from 0, i.e. MIDI channel 1 is value 0) are diverts to the given target
+// (offset from 0, i.e. MIDI channel 1 is value 0) are diverted to the given target
 // channel (also offset from 0).
 
 // If the source channel is not found in active_keyswitch_source_channels_bitmap
@@ -659,7 +659,7 @@ function trigger_keyswitch_for_rule(rule, ks, idx)
         action := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_ACTION]
         if flag .and. KEYSWITCH_FLAG_IGNORE_ROUTING = 0
             if source = -1
-                // Route all channels to keyswitch target.
+                // Source is omni: route all channels to keyswitch target.
                 for j := 0 to NUM_SOURCE_CHANNELS - 1
                     set_active_route_for_channel(rule, j, target)
                     chase_global_ccs_for_source_channel(rule, j, target)
@@ -836,7 +836,7 @@ on midi_in
                 inc(num_ks_down)
             end if
         else if is_note_off_event = 1
-            // FIXME: if rule is a passthrough rule, should pass through this note up
+            // FIXME: if ks action is block, prevent note-off from propagating.
             if num_ks_down > 0
                 dec(num_ks_down)
             end if
