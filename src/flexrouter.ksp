@@ -252,6 +252,8 @@ on init
 
     // Track last CC values (both globally and per source channel) for CC chasing.
     declare last_cc_values_by_source[NUM_SOURCE_CHANNELS * 128] := (-1)
+    // If non-zero, value is CC value in the low 8 bits, and source channel where the CC
+    // was observed in the next 8 bits.
     declare last_cc_values[128] := (-1)
 
     // Which source channels are null routed.
@@ -530,11 +532,20 @@ function should_chase_cc(rule, cc) -> result
     end if
 end function
 
-function chase_global_ccs_for_source_channel(rule, source, target)
+function chase_ccs_for_omni(rule, target)
     declare i
+    declare channel
     for i := 1 to 127
-        value := last_cc_values[i]
-        _chase(rule, source, target, i, value)
+        if last_cc_values[i] # -1
+            value := last_cc_values[i] .and. 0xff
+            channel := sh_right(last_cc_values[i], 8) .and. 0xff
+            _chase(rule, channel, target, i, value)
+            if value = 0
+                // Having chased a zero value for this CC, unset it so it won't be chased
+                // in future (unless a non-zero value is seen)
+                last_cc_values[i] := -1
+            end if
+        end if
     end for
 end function
 
@@ -543,6 +554,11 @@ function chase_ccs_for_source_channel(rule, source, target)
     for i := 1 to 127
         value := last_cc_values_by_source[source * NUM_SOURCE_CHANNELS + i]
         _chase(rule, source, target, i, value)
+        if value = 0
+            // Having chased a zero value for this CC, unset it so it won't be chased
+            // in future (unless a non-zero value is seen)
+            last_cc_values_by_source[source * NUM_SOURCE_CHANNELS + i] := -1
+        end if
     end for
 end function
 
@@ -665,8 +681,8 @@ function trigger_keyswitch_for_rule(rule, ks, idx)
                 // Source is omni: route all channels to keyswitch target.
                 for j := 0 to NUM_SOURCE_CHANNELS - 1
                     set_active_route_for_channel(rule, j, target)
-                    chase_global_ccs_for_source_channel(rule, j, target)
                 end for
+                chase_ccs_for_omni(rule, target)
             else
                 // Route specific channel to keyswitch target.
                 set_active_route_for_channel(rule, source - 1, target)
@@ -874,7 +890,7 @@ on midi_in
         if MIDI_COMMAND = MIDI_COMMAND_CC
             // Remember this value for CC chasing.
             last_cc_values_by_source[MIDI_CHANNEL * NUM_SOURCE_CHANNELS + MIDI_BYTE_1] := MIDI_BYTE_2
-            last_cc_values[MIDI_BYTE_1] := MIDI_BYTE_2
+            last_cc_values[MIDI_BYTE_1] := MIDI_BYTE_2 .or. sh_left(MIDI_CHANNEL, 8)
 
             if MIDI_BYTE_1 = 123
                 // Handle All Notes Off message
