@@ -562,8 +562,11 @@ function _chase(rule, source, target, cc, value)
                 // across multiple channels, we want to ensure we are able to later replay
                 // sustain pedal off to this target channel for anti hanging.
                 idx := source * 128 * 2 + cc * 2
-                active_ccs_routes_bitmap[idx] := active_ccs_routes_bitmap[idx] .or. sh_left(1, target)
-                active_ccs_routes_bitmap[idx + 1] := active_notes_routes_bitmap[idx + 1] .or. sh_left(1, target)
+                if target < 32
+                    active_ccs_routes_bitmap[idx] := active_ccs_routes_bitmap[idx] .or. sh_left(1, target)
+                else
+                    active_ccs_routes_bitmap[idx + 1] := active_ccs_routes_bitmap[idx + 1] .or. sh_left(1, target)
+                end if
             end if
         end if
     end if
