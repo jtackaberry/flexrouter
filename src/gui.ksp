@@ -1110,34 +1110,49 @@ end on
 on ui_control(button_keyswitch_remove)
     rule := gui_get_selected_rule()
     ks := gui_get_selected_keyswitch()
-    count := get_num_keyswitches_for_rule(rule)
-
-    if ks > 0 and ks = count - 1
-        menu_keyswitches := count - 2
-    end if
 
     // Clear current keyswitch
     rules[rule].keyswitch[ks].evcode := KEYSWITCH_UNDEFINED
-    // Now copy all subsequent keyswitches over top
-    while ks < MAX_KEYSWITCHES_PER_RULE - 1
-        rules[rule].keyswitch[ks].evcode := rules[rule].keyswitch[ks + 1].evcode
-        rules[rule].keyswitch[ks + 1].evcode := KEYSWITCH_UNDEFINED
-        name := get_menu_item_str(get_ui_id(menu_keyswitches), ks + 1)
-        set_menu_item_str(get_ui_id(menu_keyswitches), ks, name)
+
+    // Collapse all non-undefined rules down to be contiguous within the keyswitch array.
+    // This is a bit more work than we might otherwise need to do, but due to an off-by-
+    // one bug (fixed in 8ef7584) that resulted in the array becoming fragmented, we
+    // do the more thorough job of collapsing the full array to retroactively fix those
+    // arrays that ended up with gaps.
+    //
+    // Current index to store next non-undefined rule
+    target := 0
+    for source := 0 to MAX_KEYSWITCHES_PER_RULE - 1
+        if rules[rule].keyswitch[source].evcode # KEYSWITCH_UNDEFINED
+            rules[rule].keyswitch[target].evcode := rules[rule].keyswitch[source].evcode
+            name := get_keyswitch_name(rules[rule].keyswitch[source].evcode, rules[rule].keyswitch[source].velocity._raw)
+            set_menu_item_str(get_ui_id(menu_keyswitches), target, name)
+            set_menu_item_visibility(get_ui_id(menu_keyswitches), target, 1)
+            for i := 0 to MAX_CONFIG_PER_KEYSWITCH - 1
+                rules[rule].keyswitch[target].config[i] := rules[rule].keyswitch[source].config[i]
+            end for
+            for i := 0 to MAX_REDIRECTS_PER_KEYSWITCH - 1
+                rules[rule].keyswitch[target].redirects[i]._raw := rules[rule].keyswitch[source].redirects[i]._raw
+            end for
+            target := target + 1
+        end if
+    end for
+    // If we're on an item that we're now about to hide, set it to the last in the list.
+    if menu_keyswitches >= target
+        menu_keyswitches := target - 1
+    end if
+    // Ensure everything after is wiped.
+    for target := target to MAX_KEYSWITCHES_PER_RULE - 1
+        rules[rule].keyswitch[target].evcode := KEYSWITCH_UNDEFINED
         for i := 0 to MAX_CONFIG_PER_KEYSWITCH - 1
-            rules[rule].keyswitch[ks].config[i] := rules[rule].keyswitch[ks + 1].config[i]
-            rules[rule].keyswitch[ks + 1].config[i] := -1
+            rules[rule].keyswitch[target].config[i] := -1
         end for
         for i := 0 to MAX_REDIRECTS_PER_KEYSWITCH - 1
-            rules[rule].keyswitch[ks].redirects[i]._raw := rules[rule].keyswitch[ks + 1].redirects[i]._raw
-            rules[rule].keyswitch[ks + 1].redirects[i]._raw := KEYSWITCH_UNDEFINED
+            rules[rule].keyswitch[target].redirects[i]._raw := KEYSWITCH_UNDEFINED
         end for
-        ks := ks + 1
-    end while
-
-    // Hide the last item that was in the list
-    set_menu_item_str(get_ui_id(menu_keyswitches), count - 1, "<empty>")
-    set_menu_item_visibility(get_ui_id(menu_keyswitches), count - 1, 0)
+        set_menu_item_str(get_ui_id(menu_keyswitches), target, "<empty>")
+        set_menu_item_visibility(get_ui_id(menu_keyswitches), target, 0)
+    end for
     call gui_update_for_selected_keyswitch
     button_keyswitch_remove := 0
     need_maps_rebuild := 1
