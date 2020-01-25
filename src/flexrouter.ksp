@@ -774,7 +774,7 @@ on midi_in
     // Determine key/CC switch value from event
     if is_note_on_event = 1 or is_note_off_event = 1
         ks := MIDI_BYTE_1
-    else if MIDI_COMMAND = MIDI_COMMAND_CC and MIDI_BYTE_1 >= 1
+    else if MIDI_COMMAND = MIDI_COMMAND_CC and MIDI_BYTE_1 >= 0
         ks := 128*128 + MIDI_BYTE_1 * 128 + MIDI_BYTE_2
     else if MIDI_COMMAND = MIDI_COMMAND_PROGRAM_CHANGE
         ks := 128 + MIDI_BYTE_1
