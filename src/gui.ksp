@@ -133,37 +133,37 @@ macro gui_initialize
     add_menu_item(menu_global_cc_hanging, "Prevent hanging for CC2/64", 2)
     y := y + 30
 
-    menu_rules -> help := "The list of user defined rules. Up to 16 are allowed."
+    menu_rules -> help := "The list of user defined groups. Up to 16 are allowed."
     move_and_set_width(menu_rules, 70, y, 210)
     for i := 0 to MAX_GUI_RULES - 1
         add_menu_item(menu_rules, rules[i].name, i)
         set_menu_item_visibility(get_ui_id(menu_rules), i, rules[i].config[RULE_DEFINED])
     end for
 
-    button_add -> help := "Add a new rule, with all fields initialized to default values."
-    set_text(button_add, "Add Rule")
-    move_and_set_width(button_add, 290, y, 50)
+    button_add -> help := "Add a new keyswitch groups, with all fields initialized to default values."
+    set_text(button_add, "Add Group")
+    move_and_set_width(button_add, 290, y, 60)
 
-    button_remove -> help := "Remove the current rule. If there's only one rule, then it's reinitialized to default values."
-    set_text(button_remove, "Remove Rule")
-    move_and_set_width(button_remove, 350, y, 70)
+    button_remove -> help := "Remove the current group. If there's only one group, then it's reinitialized to default values."
+    set_text(button_remove, "Remove Group")
+    move_and_set_width(button_remove, 360, y, 80)
 
-    button_rule_bypass -> help := "Disable all keyswitches associated with this rule."
-    set_text(button_rule_bypass, "Bypass Rule")
-    move_and_set_width(button_rule_bypass, 430, y, 65)
+    button_rule_bypass -> help := "Disable all keyswitches associated with this group."
+    set_text(button_rule_bypass, "Bypass Group")
+    move_and_set_width(button_rule_bypass, 450, y, 75)
     center(button_rule_bypass)
 
-    button_rule_clone -> help := "Creates a new rule, copying all settings and keyswitches from this rule."
-    set_text(button_rule_clone, "Clone Rule")
-    move_and_set_width(button_rule_clone, 505, y, 65)
+    button_rule_clone -> help := "Creates a new group, copying all settings and keyswitches from this group."
+    set_text(button_rule_clone, "Clone Group")
+    move_and_set_width(button_rule_clone, 535, y, 75)
     center(button_rule_clone)
 
     // set_text(button_sort, "Sort Rules")
     // move_and_set_width(button_sort, 430, y, 60)
 
     y := y + 30
-    init_label(label_rule_name, "Rule Name", 95, y, 95)
-    text_rule_name -> help := "An aribitrary name for this rule. Be descriptive!"
+    init_label(label_rule_name, "Group Name", 95, y, 95)
+    text_rule_name -> help := "An aribitrary name for this group. Be descriptive!"
     move_and_set_width(text_rule_name, 200, y, 190)
 
     y := y + 20
@@ -174,14 +174,14 @@ macro gui_initialize
     init_channel_menu(menu_rule_keyswitch_channel, 16)
 
     y := y + 20
-    menu_rule_source_channel -> help := "Once a keyswitch is triggered and routes established, this is the default channel for the rule on which all MIDI events will be routed to the target channel(s). Individual keyswitches can override this."
+    menu_rule_source_channel -> help := "Once a keyswitch is triggered and routes established, this is the default channel for the group on which all MIDI events will be routed to the target channel(s). Individual keyswitches can override this."
     init_label(label_rule_source_channel, "Default Source", 95, y, 95)
     move_and_set_width(menu_rule_source_channel, 200, y, 60)
     add_menu_item(menu_rule_source_channel, "Omni", -1)
     init_channel_menu(menu_rule_source_channel, 16)
 
     y := y + 20
-    menu_rule_target_channel -> help := "Once a keyswitch is triggered, this is the default channel for the rule to which all subsequent non-keyswitch events will be routed. Individual keyswitches can override this."
+    menu_rule_target_channel -> help := "Once a keyswitch is triggered, this is the default channel for the group to which all subsequent non-keyswitch events will be routed. Individual keyswitches can override this."
     init_label(label_rule_target_channel, "Default Target", 95, y, 95)
     move_and_set_width(menu_rule_target_channel, 200, y, 60)
     add_menu_item(menu_rule_target_channel, "Null", -1)
@@ -199,7 +199,7 @@ macro gui_initialize
     y := y + 30
     init_label(label_keyswitches, "Keyswitches", 95, y, 95)
 
-    menu_keyswitches -> help := "The list of configured keyswitches for the current rule. Up to 127 keyswitches are allowed per rule."
+    menu_keyswitches -> help := "The list of configured keyswitches for the current group. Up to 127 keyswitches are allowed per group."
     move_and_set_width(menu_keyswitches, 200, y, 100)
     for i := 0 to MAX_KEYSWITCHES_PER_RULE - 1
         add_menu_item(menu_keyswitches, "", i)
@@ -225,7 +225,7 @@ macro gui_initialize
     set_text(button_keyswitch_clone, "Clone")
     move_and_set_width(button_keyswitch_clone, 510, y, 35)
 
-    button_keyswitch_remove -> help := "Remove the currently selected keyswitch from the rule."
+    button_keyswitch_remove -> help := "Remove the currently selected keyswitch from the group."
     set_text(button_keyswitch_remove, "Remove")
     move_and_set_width(button_keyswitch_remove, 550, y, 45)
 
@@ -245,7 +245,7 @@ macro gui_initialize
     add_menu_item(menu_rule_keyswitch_type, "CC", 1)
     add_menu_item(menu_rule_keyswitch_type, "Prog", 2)
 
-    value_rule_keyswitch_key -> help := "Receiving this note on the rule's keyswitch channel will trigger the keyswitch."
+    value_rule_keyswitch_key -> help := "Receiving this note on the group's keyswitch channel will trigger the keyswitch."
     move_and_set_width(value_rule_keyswitch_key, 245, y, 40)
     set_text(value_rule_keyswitch_key, "")
 
@@ -263,7 +263,7 @@ macro gui_initialize
     move_and_set_width(value_rule_keyswitch_velocity_range_max, 435, y, 35)
     set_text(value_rule_keyswitch_velocity_range_max, "")
 
-    value_rule_keyswitch_cc -> help := "The CC number that must be received on the rule's keyswitch channel to trigger the keyswitch."
+    value_rule_keyswitch_cc -> help := "The CC number that must be received on the group's keyswitch channel to trigger the keyswitch."
     move_and_set_width(value_rule_keyswitch_cc, 245, y, 35)
     set_text(value_rule_keyswitch_cc, "")
     set_label_properties(label_rule_keyswitch_cc_value_range_from, "with values", 0, 1)
@@ -280,12 +280,12 @@ macro gui_initialize
     move_and_set_width(value_rule_keyswitch_cc_value_range_max, 425, y, 35)
     set_text(value_rule_keyswitch_cc_value_range_max, "")
 
-    value_rule_keyswitch_program -> help := "The program change number that will trigger the keyswitch when received on the rule's keyswitch channel."
+    value_rule_keyswitch_program -> help := "The program change number that will trigger the keyswitch when received on the group's keyswitch channel."
     move_and_set_width(value_rule_keyswitch_program, 245, y, 35)
     set_text(value_rule_keyswitch_program, "")
 
     y := y + 20
-    menu_rule_keyswitch_source_channel -> help := "Override the rule-default source channel. When this keyswitch is engaged, MIDI events on this channel will be routed to the target channel. Default means use the rule default above."
+    menu_rule_keyswitch_source_channel -> help := "Override the group-default source channel. When this keyswitch is engaged, MIDI events on this channel will be routed to the target channel. Default means use the group default above."
     init_label(label_rule_keyswitch_source_channel, "Source", 135, y, 55)
     move_and_set_width(menu_rule_keyswitch_source_channel, 200, y, 60)
     add_menu_item(menu_rule_keyswitch_source_channel, "Default", 0)
@@ -293,7 +293,7 @@ macro gui_initialize
     init_channel_menu(menu_rule_keyswitch_source_channel, 16)
 
     y := y + 20
-    menu_rule_keyswitch_target_channel -> help := "Override the rule-default target channel. When this keyswitch is engaged, MIDI events will be routed to this channel.  Null is a special case which blackholes all incoming MIDI events on the source channel when this keyswitch is active."
+    menu_rule_keyswitch_target_channel -> help := "Override the group-default target channel. When this keyswitch is engaged, MIDI events will be routed to this channel.  Null is a special case which blackholes all incoming MIDI events on the source channel when this keyswitch is active."
     init_label(label_rule_keyswitch_target_channel, "Target", 135, y, 55)
     move_and_set_width(menu_rule_keyswitch_target_channel, 200, y, 60)
     add_menu_item(menu_rule_keyswitch_target_channel, "Default", 0)
