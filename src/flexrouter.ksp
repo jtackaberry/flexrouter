@@ -2,9 +2,9 @@ import "utils.ksp"
 import "gui.ksp"
 
 on init
-    set_script_title("FlexRouter 2.2.3")
+    set_script_title("FlexRouter 2.3.0b1")
     declare const DEBUG := 1
-    declare const CONFIG_VERSION := 4
+    declare const CONFIG_VERSION := 5
 
     declare const MAX_GLOBAL_CONFIG := 32
     // Version for saved data.  This will be the first piece of data persisted.
@@ -78,6 +78,10 @@ on init
     // For note-based keyswitches, defines the velocity range the keyswitch applies to.
     // Encoded such that the low 8 bits are the min velocity, and the next byte is max velocity.
     declare const RULE_KEYSWITCH_VELOCITY_RANGE := 4
+
+    // Number of semitones to transpose incoming notes when the keyswitch is activated.
+    declare const RULE_KEYSWITCH_TRANSPOSE := 5
+
     declare const VELOCITY_RANGE_DEFAULT := 0x7f00 // 0-127
 
 
@@ -241,6 +245,10 @@ on init
     // active_routes_bitmap, we use two 32-bit bitmaps for the 64 channels.
     declare active_notes_routes_bitmap[NUM_SOURCE_CHANNELS * 128*2] := (0)
 
+    // Remembers the amount the active note was transposed, so that we can ensure the note-off
+    // corresponds (as it may not match the current keyswitch transpose amount)
+    declare active_notes_transpose[NUM_SOURCE_CHANNELS * 128] := (0)
+
     // List of keyswitch notes that are being held.  End of list is -1.  Each entry
     // indicates the note (low 8 bits) and target channel (next 8 bits).
     declare active_keyswitch_notes_list[MAX_RULES * MAX_KEYSWITCHES_PER_RULE * MAX_REDIRECTS_PER_KEYSWITCH] := (-1)
@@ -264,6 +272,8 @@ on init
     // channels have already been reset via clear_active_routes_for_channel()
     declare active_keyswitch_source_channels_bitmap := 0
 
+    // Number of semitones to transpose incoming notes based on previously selected keyswitch
+    declare transpose := 0
 
     // Non-state variable
 
@@ -288,6 +298,8 @@ on init
     declare value
     declare evcode
     declare velocity
+    declare dst_midi_byte_1
+
     // Flag to rebuild maps on next MIDI event.  Normally this was done during init
     // but Kontakt complains about too many iterations.
     declare need_maps_rebuild := 1
@@ -307,12 +319,13 @@ on init
     // Make the active routes persistent so keyswitches don't need to be retriggered on reload.
     make_persistent(active_routes_bitmap)
     make_persistent(blackholed_sources)
+    make_persistent(transpose)
 
 
     // Before reading persisted rules, initialize global config and create an initial dummy rule.
     global_config[GLOBAL_CONFIG_VERSION] := CONFIG_VERSION
     global_config[GLOBAL_CONFIG_CC_HANGING] := 2
-    initialize_rule(0, "Your first rule - rename me!")
+    initialize_rule(0, "Your first group - rename me!")
 
     read_persistent_var(global_config)
     read_persistent_var(active_routes_bitmap)
@@ -323,6 +336,8 @@ on init
     read_persistent_var(rules._keyswitches)
     read_persistent_var(rules._keyswitch_config)
     read_persistent_var(rules._keyswitch_redirects)
+
+    read_persistent_var(transpose)
 
     migrate_config()
 
@@ -373,6 +388,16 @@ function migrate_config
             end for
         end for
     end if
+    if global_config[GLOBAL_CONFIG_VERSION] < 5
+        // Version 5 added transposition, so initialize pre-existing keyswitches to 0.
+        // Convert all CC keyswitches to support value ranges
+        for rule := 0 to MAX_RULES - 1
+            for ks := 0 to MAX_KEYSWITCHES_PER_RULE - 1
+                rules[rule].keyswitch[ks].config[RULE_KEYSWITCH_TRANSPOSE] := 0
+            end for
+        end for
+    end if
+
     global_config[GLOBAL_CONFIG_VERSION] := CONFIG_VERSION
 end function
 
@@ -676,6 +701,7 @@ function trigger_keyswitch_for_rule(rule, ks, idx)
     if target > 0
         target := target - 1
         action := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_ACTION]
+        transpose := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_TRANSPOSE]
         if flag .and. KEYSWITCH_FLAG_IGNORE_ROUTING = 0
             if source = -1
                 // Source is omni: route all channels to keyswitch target.
@@ -865,6 +891,7 @@ on midi_in
         // FIXME: find better names
         offset := MIDI_CHANNEL * 2
         idx := MIDI_CHANNEL * 128 * 2 + MIDI_BYTE_1 * 2
+        dst_midi_byte_1 := MIDI_BYTE_1
 
         // Prevent note hanging.
         if is_note_off_event = 1
@@ -873,17 +900,30 @@ on midi_in
             // technically redundant to route the event to the active channels later, but it's not worth
             // avoiding the repeated note off for this uncommon case, since the active note routes is
             // a superset of the active routes for note-off events.
+            //
+            // Also route the note-off now if the note-on had a different transpose amount than we currently do,
+            // otherwise we'll end up with a hanging note.  FIXME: there is a problematic edge case
+            // where the duplicate note-off below isn't actually a dupe because it can can have a different
+            // transpose amount, which could result in a note-off for a different note we pressed since
+            // activating the new keyswitch (transposed differently).  Fixing this properly would require
+            // tracking each note-on per transpose amount.  That's annoying enough that we'll probably
+            // just live with this edge case.
+            j := active_notes_transpose[MIDI_CHANNEL * NUM_SOURCE_CHANNELS + MIDI_BYTE_1]
             if active_notes_routes_bitmap[idx] # active_routes_bitmap[offset] or ...
-               active_notes_routes_bitmap[idx + 1] # active_routes_bitmap[offset + 1]
-                route_midi_event(active_notes_routes_bitmap, idx, MIDI_COMMAND, MIDI_BYTE_1, MIDI_BYTE_2)
+               active_notes_routes_bitmap[idx + 1] # active_routes_bitmap[offset + 1] or ...
+               j # transpose
+                route_midi_event(active_notes_routes_bitmap, idx, MIDI_COMMAND, MIDI_BYTE_1 + j, MIDI_BYTE_2)
             end if
             // Having just sent the note off event to all relevant channels, clear the bitmap.
             active_notes_routes_bitmap[idx] := 0
             active_notes_routes_bitmap[idx + 1] := 0
+            dst_midi_byte_1 := dst_midi_byte_1 + transpose
         else if is_note_on_event = 1
             // Track all active routing channels for the note being triggered.
             active_notes_routes_bitmap[idx] := active_notes_routes_bitmap[idx] .or. active_routes_bitmap[offset]
             active_notes_routes_bitmap[idx + 1] := active_notes_routes_bitmap[idx + 1] .or. active_routes_bitmap[offset + 1]
+            active_notes_transpose[MIDI_CHANNEL * NUM_SOURCE_CHANNELS + MIDI_BYTE_1] := transpose
+            dst_midi_byte_1 := dst_midi_byte_1 + transpose
         end if
 
         // Special treatment for CC events.
@@ -937,7 +977,7 @@ on midi_in
         // If there aren't any active routes, we don't interfere with the event.
         if active_routes_bitmap[offset] # 0 or active_routes_bitmap[offset + 1] # 0
             ignore_midi
-            route_midi_event(active_routes_bitmap, offset, MIDI_COMMAND, MIDI_BYTE_1, MIDI_BYTE_2)
+            route_midi_event(active_routes_bitmap, offset, MIDI_COMMAND, dst_midi_byte_1, MIDI_BYTE_2)
         else if blackholed_sources[MIDI_CHANNEL] # 0
             ignore_midi
         end if

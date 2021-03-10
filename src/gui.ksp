@@ -80,6 +80,10 @@ macro gui_initialize
     declare ui_switch switch_rule_keyswitch_flags_hold_notes
     declare ui_switch switch_rule_keyswitch_flags_redirect_only
 
+    // Transpoe
+    declare ui_label label_rule_keyswitch_transpose (1,1)
+    declare ui_value_edit value_rule_keyswitch_transpose (-64, 64, 1)
+
     // Keyswitch action menu (block, passthrough, redirect)
     declare ui_label label_rule_keyswitch_action (1,1)
     declare ui_menu menu_rule_keyswitch_action
@@ -119,7 +123,7 @@ macro gui_initialize
 
 
     make_persistent(menu_rules)
-    set_ui_height_px(290 + 20 * MAX_GUI_REDIRECTS_PER_KEYSWITCH)
+    set_ui_height_px(310 + 20 * MAX_GUI_REDIRECTS_PER_KEYSWITCH)
 
     init_label(label_global_config, "Global Config ", 70, y, 75)
     menu_global_cc_hanging -> help := "Ensures that, for the specified CCs, zero-values are sent to all channels that had previously received events for these CCs."
@@ -310,6 +314,13 @@ macro gui_initialize
     center(switch_rule_keyswitch_flags_redirect_only)
 
     y := y + 20
+    init_label(label_rule_keyswitch_transpose, "Transpose", 135, y, 55)
+    move_and_set_width(value_rule_keyswitch_transpose, 200, y, 35)
+    value_rule_keyswitch_transpose -> help := "Number of semitones to transpose incoming notes after the keyswitch is triggered."
+    set_text(value_rule_keyswitch_transpose, "")
+
+    y := y + 20
+
     init_label(label_rule_keyswitch_action, "KS Action", 135, y, 55)
 
     menu_rule_keyswitch_action -> help := "Defines the action to take when the keyswitch is triggered. Block prevents the keyswitch from reaching the target channel. Passthrough will route the keyswitch as-is to the target. Redirect allows user-customizable translation to the target."
@@ -524,6 +535,8 @@ function gui_set_keyswitch_section_visibility(rule, idx, ks, action)
     label_rule_keyswitch_flags -> hide := params[0]
     switch_rule_keyswitch_flags_hold_notes -> hide := params[4]
     switch_rule_keyswitch_flags_redirect_only -> hide := params[4]
+    label_rule_keyswitch_transpose -> hide := params[0]
+    value_rule_keyswitch_transpose -> hide := params[0]
 
     for i := 0 to MAX_GUI_REDIRECTS_PER_KEYSWITCH - 1
         // Initialize show/hide parameters based on keyswitch config context
@@ -599,60 +612,67 @@ end function
 // Adjusts all the UI elements to reflect the currently selected keyswitch (for the current rule)
 function gui_update_for_selected_keyswitch()
     rule := gui_get_selected_rule()
-    idx := gui_get_selected_keyswitch()
-    ks := rules[rule].keyswitch[idx].evcode
-    action := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_ACTION]
-    flag := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_FLAGS]
+    count := get_num_keyswitches_for_rule(rule)
 
-    if ks # KEYSWITCH_UNDEFINED
-        if ks < 128
-            value_rule_keyswitch_velocity_range_min := rules[rule].keyswitch[idx].velocity.min
-            value_rule_keyswitch_velocity_range_max := rules[rule].keyswitch[idx].velocity.max
-        else if ks > 128*128
-            // CC
-            value_rule_keyswitch_cc_value_range_min := rules[rule].keyswitch[idx].velocity.min
-            value_rule_keyswitch_cc_value_range_max := rules[rule].keyswitch[idx].velocity.max
-        end if
-        menu_rule_keyswitch_source_channel := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_SOURCE_CHANNEL]
-        menu_rule_keyswitch_target_channel := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_TARGET_CHANNEL]
-        switch_rule_keyswitch_flags_hold_notes := flag .and. KEYSWITCH_FLAG_HOLD_NOTES
-        switch_rule_keyswitch_flags_redirect_only := flag .and. KEYSWITCH_FLAG_IGNORE_ROUTING
-    end if
+    if count > 0
+        idx := gui_get_selected_keyswitch()
+        ks := rules[rule].keyswitch[idx].evcode
+        action := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_ACTION]
+        flag := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_FLAGS]
 
-    gui_set_keyswitch_section_visibility(rule, idx, ks, action)
-
-    if ks < 128
-        menu_rule_keyswitch_type := 0
-        value_rule_keyswitch_key := ks
-    else if ks < 256
-        menu_rule_keyswitch_type := 2
-        value_rule_keyswitch_program := ks - 128
-    else if ks # KEYSWITCH_UNDEFINED
-        menu_rule_keyswitch_type := 1
-        value_rule_keyswitch_cc := ks / 128 - 128
-        // value_rule_keyswitch_cc_value_range_min := ks mod 128
-    end if
-
-    menu_rule_keyswitch_action := action
-
-    if action = KEYSWITCH_ACTION_REDIRECT
-        macro update_keyswitch_redirect(#n#)
-            evcode := rules[rule].keyswitch[idx].redirects[#n#].evcode
-            if evcode < 128
-                velocity := rules[rule].keyswitch[idx].redirects[#n#].velocity
-                value_rule_keyswitch_redirect_key#n# := evcode
-                menu_rule_keyswitch_redirect_type#n# := 0
-                value_rule_keyswitch_redirect_key_velocity#n# := velocity
-            else if evcode < 256
-                menu_rule_keyswitch_redirect_type#n# := 2
-                value_rule_keyswitch_redirect_program#n# := evcode - 128
-            else if evcode # KEYSWITCH_UNDEFINED
-                menu_rule_keyswitch_redirect_type#n# := 1
-                value_rule_keyswitch_redirect_cc#n# := evcode / 128 - 128
-                value_rule_keyswitch_redirect_cc_value#n# := evcode mod 128
+        if ks # KEYSWITCH_UNDEFINED
+            if ks < 128
+                value_rule_keyswitch_velocity_range_min := rules[rule].keyswitch[idx].velocity.min
+                value_rule_keyswitch_velocity_range_max := rules[rule].keyswitch[idx].velocity.max
+            else if ks > 128*128
+                // CC
+                value_rule_keyswitch_cc_value_range_min := rules[rule].keyswitch[idx].velocity.min
+                value_rule_keyswitch_cc_value_range_max := rules[rule].keyswitch[idx].velocity.max
             end if
-        end macro
-        iterate_macro(update_keyswitch_redirect) := 0 to MAX_GUI_REDIRECTS_PER_KEYSWITCH - 1
+            menu_rule_keyswitch_source_channel := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_SOURCE_CHANNEL]
+            menu_rule_keyswitch_target_channel := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_TARGET_CHANNEL]
+            value_rule_keyswitch_transpose := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_TRANSPOSE]
+            switch_rule_keyswitch_flags_hold_notes := flag .and. KEYSWITCH_FLAG_HOLD_NOTES
+            switch_rule_keyswitch_flags_redirect_only := flag .and. KEYSWITCH_FLAG_IGNORE_ROUTING
+        end if
+
+        gui_set_keyswitch_section_visibility(rule, idx, ks, action)
+
+        if ks < 128
+            menu_rule_keyswitch_type := 0
+            value_rule_keyswitch_key := ks
+        else if ks < 256
+            menu_rule_keyswitch_type := 2
+            value_rule_keyswitch_program := ks - 128
+        else if ks # KEYSWITCH_UNDEFINED
+            menu_rule_keyswitch_type := 1
+            value_rule_keyswitch_cc := ks / 128 - 128
+            // value_rule_keyswitch_cc_value_range_min := ks mod 128
+        end if
+
+        menu_rule_keyswitch_action := action
+
+        if action = KEYSWITCH_ACTION_REDIRECT
+            macro update_keyswitch_redirect(#n#)
+                evcode := rules[rule].keyswitch[idx].redirects[#n#].evcode
+                if evcode < 128
+                    velocity := rules[rule].keyswitch[idx].redirects[#n#].velocity
+                    value_rule_keyswitch_redirect_key#n# := evcode
+                    menu_rule_keyswitch_redirect_type#n# := 0
+                    value_rule_keyswitch_redirect_key_velocity#n# := velocity
+                else if evcode < 256
+                    menu_rule_keyswitch_redirect_type#n# := 2
+                    value_rule_keyswitch_redirect_program#n# := evcode - 128
+                else if evcode # KEYSWITCH_UNDEFINED
+                    menu_rule_keyswitch_redirect_type#n# := 1
+                    value_rule_keyswitch_redirect_cc#n# := evcode / 128 - 128
+                    value_rule_keyswitch_redirect_cc_value#n# := evcode mod 128
+                end if
+            end macro
+            iterate_macro(update_keyswitch_redirect) := 0 to MAX_GUI_REDIRECTS_PER_KEYSWITCH - 1
+        end if
+    else
+        gui_set_keyswitch_section_visibility(rule, 0, KEYSWITCH_UNDEFINED, 0)
     end if
 end function
 
@@ -708,7 +728,7 @@ function gui_append_keyswitch_to_selected_rule
                 // No existing keyswitches, use first note.
                 ks := 0
             end if
-        else if ks < 128 and button_keyswitch_midi_learn_inc = 1
+        else if ks < 128 and button_keyswitch_midi_learn_inc = 1 and count > 0
             // Copy velocity to new keyswitch learned via
             velocity := rules[rule].keyswitch[idx].velocity._raw
         else if ks > 128*128
@@ -731,6 +751,7 @@ function gui_append_keyswitch_to_selected_rule
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_ACTION] := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_ACTION]
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_SOURCE_CHANNEL] := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_SOURCE_CHANNEL]
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_TARGET_CHANNEL] := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_TARGET_CHANNEL]
+                rules[rule].keyswitch[count].config[RULE_KEYSWITCH_TRANSPOSE] := rules[rule].keyswitch[idx].config[RULE_KEYSWITCH_TRANSPOSE]
 
                 // If the currently selected keyswitch we're cloning is a redirect and the Learn++
                 // button was pressed, rather than cloning the redirect config directly, measure the
@@ -764,6 +785,8 @@ function gui_append_keyswitch_to_selected_rule
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_ACTION] := KEYSWITCH_ACTION_BLOCK
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_SOURCE_CHANNEL] := 0
                 rules[rule].keyswitch[count].config[RULE_KEYSWITCH_TARGET_CHANNEL] := 0
+                rules[rule].keyswitch[count].config[RULE_KEYSWITCH_TRANSPOSE] := 0
+
                 for i := 0 to MAX_REDIRECTS_PER_KEYSWITCH - 1
                     rules[rule].keyswitch[count].redirects[i].evcode := KEYSWITCH_UNDEFINED
                 end for
@@ -1138,7 +1161,7 @@ on ui_control(button_keyswitch_remove)
         end if
     end for
     // If we're on an item that we're now about to hide, set it to the last in the list.
-    if menu_keyswitches >= target
+    if menu_keyswitches >= target and target > 0
         menu_keyswitches := target - 1
     end if
     // Ensure everything after is wiped.
@@ -1240,6 +1263,12 @@ end on
 on ui_control(value_rule_keyswitch_program)
     call gui_set_selected_keyswitch_from_ui
     need_maps_rebuild := 1
+end on
+
+
+// Keyswitch transpose changed
+on ui_control(value_rule_keyswitch_transpose)
+    gui_set_selected_keyswitch_config(RULE_KEYSWITCH_TRANSPOSE, value_rule_keyswitch_transpose)
 end on
 
 
